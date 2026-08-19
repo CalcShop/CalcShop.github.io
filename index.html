@@ -4,6 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CalcShop 셈공방 — 무료 계산·변환 도구</title>
+  <!-- GA4: https://analytics.google.com 에서 속성 만들기 → 측정 ID(G-XXXXXXXXXX) 복사 후 아래에 붙여넣기 -->
+  <script>
+    window.CALCSHOP_GA_ID = "G-XXXXXXXXXX";
+    (function () {
+      var id = window.CALCSHOP_GA_ID;
+      if (!id || id === "G-XXXXXXXXXX") return;
+      var s = document.createElement("script");
+      s.async = true;
+      s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(id);
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag("js", new Date());
+      window.gtag("config", id, { send_page_view: false });
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
@@ -3190,6 +3206,39 @@
         });
       }
 
+      function trackPageView(state) {
+        var id = window.CALCSHOP_GA_ID;
+        if (!id || id === "G-XXXXXXXXXX" || typeof window.gtag !== "function") return;
+        var path = "/";
+        var title = "CalcShop 셈공방";
+        if (state && state.page && state.page !== "home") {
+          if (state.page === "calcDetail" && state.toolId) {
+            path = "/calc/" + state.toolId;
+            var ct = tools.find(function (x) { return x.id === state.toolId; });
+            title = ct ? ct.title + " — CalcShop" : title;
+          } else if (state.page === "convertDetail" && state.toolId) {
+            path = "/convert/" + state.toolId;
+            var cv = convertTools.find(function (x) { return x.id === state.toolId; });
+            title = cv ? cv.title + " — CalcShop" : title;
+          } else if (state.page === "workDetail" && state.toolId) {
+            path = "/work/" + state.toolId;
+            var wk = workTools.find(function (x) { return x.id === state.toolId; });
+            title = wk ? wk.title + " — CalcShop" : title;
+          } else if (state.page === "lottoDetail" && state.mode) {
+            path = "/lotto/" + state.mode;
+            title = "로또생성기" + state.mode + " — CalcShop";
+          } else {
+            path = "/" + state.page;
+            title = (names[state.page] || state.page) + " — CalcShop";
+          }
+        }
+        window.gtag("event", "page_view", {
+          page_path: path,
+          page_title: title,
+          page_location: window.location.origin + path
+        });
+      }
+
       function updateCrumb(segments) {
         crumbTrail.innerHTML = "";
         segments.forEach(function (seg, i) {
@@ -3220,10 +3269,11 @@
       function goHome() {
         history.pushState({ page: "home" }, "");
         openPanel("home", true);
+        trackPageView({ page: "home" });
       }
 
       function navigate(state) {
-        if (!state) { openPanel("home", true); return; }
+        if (!state) { openPanel("home", true); trackPageView({ page: "home" }); return; }
         if (state.page === "home") { openPanel("home", true); }
         else if (state.page === "calc") { openPanel("calc", true); }
         else if (state.page === "convert") { openPanel("convert", true); }
@@ -3245,6 +3295,7 @@
           var t = convertTools.find(function(x){ return x.id === state.toolId; });
           if (t) { openPanel("convert", true); openConvertDirect(t); }
         }
+        trackPageView(state);
       }
 
       window.addEventListener("popstate", function(e) {
@@ -3299,6 +3350,7 @@
         if (!Number.isFinite(m) || m < 1 || m > 7) m = 1;
         if (!skipHistory) {
           history.pushState({ page: "lottoDetail", mode: m }, "");
+          trackPageView({ page: "lottoDetail", mode: m });
         }
 
         currentLottoMode = m;
@@ -3401,6 +3453,7 @@
       function openWork(tool) {
         history.pushState({ page: "workDetail", toolId: tool.id }, "");
         openWorkDirect(tool);
+        trackPageView({ page: "workDetail", toolId: tool.id });
       }
 
       function openConvertDirect(tool) {
@@ -3432,6 +3485,7 @@
       function openConvert(tool) {
         history.pushState({ page: "convertDetail", toolId: tool.id }, "");
         openConvertDirect(tool);
+        trackPageView({ page: "convertDetail", toolId: tool.id });
       }
 
       function openCalcDirect(tool) {
@@ -3462,6 +3516,7 @@
       function openCalc(tool) {
         history.pushState({ page: "calcDetail", toolId: tool.id }, "");
         openCalcDirect(tool);
+        trackPageView({ page: "calcDetail", toolId: tool.id });
       }
 
       function renderCalcGrid() {
@@ -3491,6 +3546,7 @@
       function openPanel(id, skipHistory) {
         if (!skipHistory) {
           history.pushState({ page: id }, "");
+          trackPageView({ page: id });
         }
         setTopActive(id);
         panels.forEach(function (p) {
@@ -3964,6 +4020,7 @@
       renderCalcGrid();
       updateCrumb([{ label: "홈" }]);
       history.replaceState({ page: "home" }, "");
+      trackPageView({ page: "home" });
     })();
   </script>
 </body>
