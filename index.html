@@ -1,0 +1,3970 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CalcShop 셈공방 — 무료 계산·변환 도구</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #12151a;
+      --muted: #5c6570;
+      --line: #e4e8ee;
+      --panel: #ffffff;
+      --bg0: #f3f5f8;
+      --bg1: #e8eef6;
+      --accent: #0d9488;
+      --accent-soft: #ccfbf1;
+      --accent-ink: #0f766e;
+      --warn: #b45309;
+      --radius: 14px;
+      --sidebar: 240px;
+      --shadow: 0 1px 0 rgba(18, 21, 26, 0.04), 0 12px 32px rgba(18, 21, 26, 0.06);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Noto Sans KR", "Figtree", sans-serif;
+      background:
+        radial-gradient(1200px 600px at -10% -20%, #d7ece8 0%, transparent 55%),
+        radial-gradient(900px 500px at 110% 0%, #dbe4f5 0%, transparent 50%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height: 100vh;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: var(--sidebar) 1fr;
+      min-height: 100vh;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    /* —— Sidebar —— */
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 28px 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      border-right: 1px solid rgba(18, 21, 26, 0.06);
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      padding: 0 10px;
+      animation: rise 0.5s ease both;
+    }
+    .brand-mark {
+      font-family: "Figtree", sans-serif;
+      font-weight: 700;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+    .brand-mark span { color: var(--accent); }
+    .brand-sub {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .nav-label {
+      padding: 0 12px 8px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8b949e;
+    }
+    .nav button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.18s, color 0.18s, transform 0.18s;
+    }
+    .nav button:hover {
+      background: rgba(13, 148, 136, 0.08);
+      color: var(--ink);
+    }
+    .nav button.active {
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+      font-weight: 600;
+    }
+    .nav .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.45;
+      flex-shrink: 0;
+    }
+    .nav button.active .dot { opacity: 1; }
+
+    .tool-section { margin-bottom: 24px; }
+    .tool-section-title {
+      margin: 0 0 10px;
+      padding: 0 0 8px 4px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      border-bottom: 1px solid var(--line);
+    }
+    .tool-section .grid {
+      padding-left: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+
+    .sidebar-foot {
+      padding: 0 10px;
+      font-size: 0.75rem;
+      color: #8b949e;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+
+    /* —— Main —— */
+    .main {
+      padding: 36px 40px 56px;
+      animation: rise 0.55s ease 0.05s both;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .menu-btn {
+      display: none;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .crumb-trail {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+      margin-left: auto;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .crumb-link {
+      appearance: none;
+      border: 0;
+      background: none;
+      font: inherit;
+      font-size: inherit;
+      color: var(--accent-ink);
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 2px;
+    }
+    .crumb-link:hover { text-decoration: underline; }
+    .crumb-sep { opacity: 0.45; user-select: none; }
+    .crumb-current { color: var(--ink); font-weight: 600; }
+
+    .panel {
+      display: none;
+      background: var(--panel);
+      border: 1px solid rgba(18, 21, 26, 0.06);
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow: var(--shadow);
+      padding: 32px 34px;
+      animation: fade 0.28s ease both;
+    }
+    .panel.active { display: block; }
+
+    .panel h1 {
+      margin: 0 0 10px;
+      font-family: "Figtree", "Noto Sans KR", sans-serif;
+      font-size: clamp(1.55rem, 2.4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+    }
+    .lead {
+      margin: 0 0 28px;
+      max-width: 38rem;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.98rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .tool {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 11px;
+      background: #fafbfc;
+      transition: border-color 0.18s, transform 0.18s, background 0.18s;
+      cursor: default;
+    }
+    .tool:hover {
+      border-color: #99f6e4;
+      background: #fff;
+      transform: translateY(-1px);
+    }
+    .tool h3 {
+      margin: 0 0 4px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .tool p {
+      margin: 0;
+      font-size: 0.76rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--accent-ink);
+      background: var(--accent-soft);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .badge.soon {
+      color: var(--warn);
+      background: #ffedd5;
+    }
+    .tool.clickable { cursor: pointer; }
+    .tool .rank {
+      font-family: "Figtree", sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .calc-list, .calc-detail { display: none; }
+    .calc-list.show, .calc-detail.show { display: block; animation: fade 0.28s ease both; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+      margin: 8px 0 18px;
+    }
+    .field-full {
+      grid-column: 1 / -1;
+    }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 0.95rem;
+      background: #fff;
+      color: var(--ink);
+      box-sizing: border-box;
+    }
+    .field textarea {
+      resize: vertical;
+      min-height: 88px;
+      line-height: 1.45;
+    }
+    .field input[type="checkbox"] {
+      width: auto;
+      margin-right: 8px;
+      padding: 0;
+      min-height: 0;
+    }
+    .field select {
+      min-height: 42px;
+      padding-right: 28px;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: 2px solid var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .ladder-board {
+      margin-top: 20px;
+      overflow-x: auto;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+    }
+    .ladder-stage {
+      margin: 0 auto;
+      min-width: min-content;
+    }
+    .ladder-slots {
+      display: flex;
+      align-items: stretch;
+    }
+    .ladder-slots .field {
+      flex: 1 0 0;
+      padding: 0 4px;
+      min-width: 0;
+    }
+    .ladder-slots input {
+      text-align: center;
+      padding: 8px 6px;
+      font-size: 0.85rem;
+    }
+    .ladder-svg-wrap {
+      position: relative;
+      margin: 8px 0;
+    }
+    .ladder-cover {
+      position: absolute;
+      inset: 0;
+      background: #dbe4ee;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+    .ladder-board.revealed .ladder-cover { display: none; }
+    .ladder-board svg { display: block; margin: 0 auto; }
+    .ladder-board .ladder-path {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .ladder-board.revealed .ladder-path { opacity: 0.12; }
+    .ladder-board.revealed .ladder-path.show { opacity: 1; }
+    .ladder-slots input.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .ladder-result {
+      margin-top: 14px;
+      padding: 16px 18px;
+      background: #f0fdfa;
+      border: 1px solid #99f6e4;
+      border-radius: var(--radius);
+    }
+    .ladder-result-title {
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--accent-ink);
+    }
+    .ladder-map {
+      display: grid;
+      gap: 8px;
+    }
+    .ladder-map-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+    .ladder-map-row strong {
+      display: inline;
+      min-width: 4em;
+      margin: 0;
+      font-size: inherit;
+      font-family: inherit;
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+    .ladder-map-arrow { color: var(--muted); }
+    .result-box {
+      background: #f0fdfa;
+      border: 1px solid #99f6e4;
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-top: 8px;
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+    .result-box strong {
+      display: block;
+      font-size: 1.25rem;
+      font-family: "Figtree", "Noto Sans KR", sans-serif;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+      color: var(--accent-ink);
+    }
+    .basis-box {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #f8fafc;
+      padding: 14px 16px;
+      margin: 20px 0 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .basis-box h3 {
+      margin: 0 0 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .basis-box .year-tag {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .basis-box table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    .basis-box th, .basis-box td {
+      text-align: left;
+      padding: 6px 4px;
+      border-top: 1px solid var(--line);
+      font-weight: 500;
+      vertical-align: top;
+    }
+    .basis-box th { width: 38%; color: var(--ink); font-weight: 600; }
+    .basis-box .warn-line {
+      margin-top: 10px;
+      color: var(--warn);
+      font-weight: 600;
+    }
+    .break-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.85rem;
+    }
+    .break-table th, .break-table td {
+      padding: 7px 4px;
+      border-top: 1px solid #ccfbf1;
+      text-align: left;
+    }
+    .break-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    .break-table tr.total td {
+      font-weight: 700;
+      color: var(--accent-ink);
+      border-top: 2px solid #99f6e4;
+    }
+
+    .back-link {
+      appearance: none;
+      border: 0;
+      background: none;
+      color: var(--accent-ink);
+      font: inherit;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      margin: 0 0 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .back-link::before {
+      content: "←";
+      font-size: 1.15em;
+    }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      transition: filter 0.15s, transform 0.15s;
+    }
+    .btn:hover { filter: brightness(1.06); }
+    .btn:active { transform: scale(0.98); }
+    .btn.ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .note {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .diff-same, .diff-del, .diff-add {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.82rem;
+      padding: 3px 8px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .diff-del { background: #fee2e2; color: #991b1b; }
+    .diff-add { background: #dcfce7; color: #166534; }
+    .diff-same { background: #f8fafc; color: var(--muted); }
+    .qr-preview {
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+    }
+    .qr-preview canvas, .qr-preview img {
+      max-width: 220px;
+      background: #fff;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .file-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .file-list-item {
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .file-list-item input[type="number"] {
+      width: 52px;
+      text-align: center;
+      padding: 6px 4px;
+      font-size: 0.85rem;
+    }
+    .file-list-name {
+      min-width: 0;
+      font-size: 0.88rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-list-name small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+    .file-list-btns {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .file-list-btns button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font: inherit;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .file-list-btns button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    /* mobile overlay */
+    .backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 21, 26, 0.35);
+      z-index: 20;
+    }
+    .backdrop.show { display: block; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @media (max-width: 820px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        width: min(280px, 86vw);
+        z-index: 30;
+        transform: translateX(-105%);
+        transition: transform 0.25s ease;
+        box-shadow: var(--shadow);
+        background: rgba(255, 255, 255, 0.96);
+      }
+      .sidebar.open { transform: none; }
+      .menu-btn { display: inline-flex; }
+      .main { padding: 20px 18px 40px; }
+      .panel { padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="backdrop" id="backdrop" hidden></div>
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">Calc<span>Shop</span></div>
+        <div class="brand-sub">셈공방 · 무료 계산 도구</div>
+      </div>
+
+      <nav class="nav" aria-label="카테고리">
+        <div class="nav-label">Category</div>
+        <button type="button" class="active" data-panel="home"><span class="dot"></span>홈</button>
+        <button type="button" data-panel="calc"><span class="dot"></span>계산 도구</button>
+        <button type="button" data-panel="convert"><span class="dot"></span>변환 도구</button>
+        <button type="button" data-panel="work"><span class="dot"></span>업무 보조</button>
+        <button type="button" data-panel="lotto"><span class="dot"></span>로또 생성기</button>
+        <button type="button" data-panel="ladder"><span class="dot"></span>사다리타기</button>
+      </nav>
+
+      <div class="sidebar-foot">계산 10 · 변환 10 · 업무 10<br>카테고리 클릭 → 오른쪽에서 도구 선택</div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <button type="button" class="menu-btn" id="menuBtn" aria-label="메뉴">메뉴</button>
+        <nav class="crumb-trail" id="crumbTrail" aria-label="현재 위치"></nav>
+      </div>
+
+      <!-- 홈 -->
+      <section class="panel active" id="panel-home">
+        <h1>필요한 도구를<br>카테고리에서 고르세요</h1>
+        <p class="lead">
+          계산·변환 도구를 주제별로 모았습니다. 왼쪽에서 카테고리를 고르고 오른쪽에서 도구를 선택하세요.
+        </p>
+        <div class="grid">
+          <article class="tool" data-goto="calc">
+            <h3>계산 도구</h3>
+            <p>돈·금융 · 건강 · 날짜·나이</p>
+            <span class="badge">10개</span>
+          </article>
+          <article class="tool" data-goto="convert">
+            <h3>변환 도구</h3>
+            <p>환율 · 단위 · 파일 · 텍스트</p>
+            <span class="badge">10개</span>
+          </article>
+          <article class="tool" data-goto="work">
+            <h3>업무 보조</h3>
+            <p>글자수 · QR · 근무수당 · PDF합치기</p>
+            <span class="badge">10개</span>
+          </article>
+          <article class="tool" data-goto="lotto">
+            <h3>로또 생성기</h3>
+            <p>1~45 중 6개 번호 생성</p>
+            <span class="badge">무료</span>
+          </article>
+          <article class="tool" data-goto="ladder">
+            <h3>사다리타기</h3>
+            <p>칸 수 정하고 이름 적은 뒤 추첨</p>
+            <span class="badge">무료</span>
+          </article>
+        </div>
+      </section>
+
+      <!-- 계산 -->
+      <section class="panel" id="panel-calc">
+        <div class="calc-list show" id="calcList">
+          <button type="button" class="back-link" id="calcListBack">홈</button>
+          <h1>계산 도구</h1>
+          <p class="lead">돈·금융 · 건강 · 날짜·나이 — 법령·표준 공식 기준 (참고용)</p>
+          <div id="calcToolGrid"></div>
+          <p class="note">세법·요율은 시점에 따라 달라질 수 있습니다. 공식 상담·신고용이 아닙니다.</p>
+        </div>
+        <div class="calc-detail" id="calcDetail">
+          <button type="button" class="back-link" id="calcDetailBack">계산 도구 목록</button>
+          <h1 id="calcTitle"></h1>
+          <p class="lead" id="calcLead"></p>
+          <div id="calcForm"></div>
+          <div class="actions">
+            <button type="button" class="btn" id="calcRun">계산하기</button>
+          </div>
+          <div class="result-box" id="calcResult" hidden></div>
+          <div id="calcRef"></div>
+        </div>
+      </section>
+
+      <!-- 변환 -->
+      <section class="panel" id="panel-convert">
+        <div class="calc-list show" id="convertList">
+          <button type="button" class="back-link" id="convertListBack">홈</button>
+          <h1>변환 도구</h1>
+          <p class="lead">환율 · 단위 · 파일 · 텍스트 — 표준 환산·브라우저 처리 (참고용)</p>
+          <div id="convertToolGrid"></div>
+          <p class="note">파일 변환은 브라우저에서만 처리합니다. 이미지 권장 10MB 이하.</p>
+        </div>
+        <div class="calc-detail" id="convertDetail">
+          <button type="button" class="back-link" id="convertDetailBack">변환 도구 목록</button>
+          <h1 id="convertTitle"></h1>
+          <p class="lead" id="convertLead"></p>
+          <div id="convertForm"></div>
+          <div class="actions">
+            <button type="button" class="btn" id="convertRun">변환하기</button>
+          </div>
+          <div class="result-box" id="convertResult" hidden></div>
+          <div id="convertRef"></div>
+        </div>
+      </section>
+
+      <!-- 업무 -->
+      <section class="panel" id="panel-work">
+        <div class="calc-list show" id="workList">
+          <button type="button" class="back-link" id="workListBack">홈</button>
+          <h1>업무 보조</h1>
+          <p class="lead">문서 · 업무계산 · 생성·확인 — 브라우저에서만 처리합니다.</p>
+          <div id="workToolGrid"></div>
+          <p class="note">입력값은 서버로 보내지 않습니다. 법적·세무 판단용이 아닙니다.</p>
+        </div>
+        <div class="calc-detail" id="workDetail">
+          <button type="button" class="back-link" id="workDetailBack">업무 보조 목록</button>
+          <h1 id="workTitle"></h1>
+          <p class="lead" id="workLead"></p>
+          <div id="workForm"></div>
+          <div class="actions">
+            <button type="button" class="btn" id="workRun">실행</button>
+          </div>
+          <div class="result-box" id="workResult" hidden></div>
+          <div id="workRef"></div>
+        </div>
+      </section>
+
+      <!-- 로또 -->
+      <section class="panel" id="panel-lotto">
+        <div class="calc-list show" id="lottoList">
+          <button type="button" class="back-link" id="lottoListBack">홈</button>
+          <h1>로또 생성기</h1>
+          <p class="lead">로또 생성 방식을 선택하세요.</p>
+          <div class="grid" style="margin-top:10px">
+            <article class="tool" data-lotto-mode="1">
+              <h3>로또생성기1</h3>
+              <p>랜덤 방식</p>
+              <span class="badge">1</span>
+            </article>
+            <article class="tool" data-lotto-mode="2">
+              <h3>로또생성기2</h3>
+              <p>균형형(홀짝 3:3 + 저/고 3:3)</p>
+              <span class="badge">2</span>
+            </article>
+            <article class="tool" data-lotto-mode="3">
+              <h3>로또생성기3</h3>
+              <p>연속 최소형(연속 1개 이하)</p>
+              <span class="badge">3</span>
+            </article>
+            <article class="tool" data-lotto-mode="4">
+              <h3>로또생성기4</h3>
+              <p>공격형(높은 수 비중↑)</p>
+              <span class="badge">4</span>
+            </article>
+            <article class="tool" data-lotto-mode="5">
+              <h3>로또생성기5</h3>
+              <p>보수형(낮은 수 비중↑)</p>
+              <span class="badge">5</span>
+            </article>
+            <article class="tool" data-lotto-mode="6">
+              <h3>로또생성기6</h3>
+              <p>분산형(구간 폭 넓게)</p>
+              <span class="badge">6</span>
+            </article>
+            <article class="tool" data-lotto-mode="7">
+              <h3>로또생성기7</h3>
+              <p>커스텀(홀짝·저고·연속·합계 선택)</p>
+              <span class="badge">7</span>
+            </article>
+          </div>
+        </div>
+
+        <div class="calc-detail" id="lottoDetail">
+          <button type="button" class="back-link" id="lottoDetailBack">로또 생성기 목록</button>
+          <h1 id="lottoTitle"></h1>
+          <p class="lead" id="lottoLead"></p>
+          <div id="lottoControls" class="form-grid" style="margin-top:6px">
+            <div class="field">
+              <label for="lotto_sets">세트 수</label>
+              <input id="lotto_sets" type="number" min="1" max="20" inputmode="numeric" value="1" />
+            </div>
+          </div>
+          <div id="lottoCustomWrap" class="form-grid" hidden>
+            <div class="field">
+              <label for="lotto_odd">홀짝</label>
+              <select id="lotto_odd">
+                <option value="auto">자동</option>
+                <option value="2">홀 2 · 짝 4</option>
+                <option value="3" selected>홀 3 · 짝 3</option>
+                <option value="4">홀 4 · 짝 2</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="lotto_low">저/고 (1~22 / 23~45)</label>
+              <select id="lotto_low">
+                <option value="auto">자동</option>
+                <option value="2">저 2 · 고 4</option>
+                <option value="3" selected>저 3 · 고 3</option>
+                <option value="4">저 4 · 고 2</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="lotto_consec">연속번호</label>
+              <select id="lotto_consec">
+                <option value="auto">자동</option>
+                <option value="none">연속 없음</option>
+                <option value="max1" selected>연속 1쌍까지</option>
+                <option value="no3">3연속만 금지</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="lotto_sum">번호 합계</label>
+              <select id="lotto_sum">
+                <option value="auto">자동</option>
+                <option value="100-170" selected>100~170 (흔함)</option>
+                <option value="80-120">80~120 (낮음)</option>
+                <option value="150-180">150~180 (높음)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="lotto_decade">구간 분산</label>
+              <select id="lotto_decade">
+                <option value="auto">자동</option>
+                <option value="3" selected>3구간 이상</option>
+                <option value="4">4구간 이상</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn" id="lottoGenBtn">로또 생성</button>
+          </div>
+          <div class="result-box" id="lottoOut" hidden></div>
+          <p class="note">랜덤/규칙 기반 생성이며 당첨을 보장하지 않습니다.</p>
+        </div>
+      </section>
+
+      <!-- 사다리타기 -->
+      <section class="panel" id="panel-ladder">
+        <button type="button" class="back-link" id="ladderBack">홈</button>
+        <h1>사다리타기</h1>
+        <p class="lead">인원 수를 정하면 칸이 생깁니다. 위·아래에 이름을 적은 뒤 사다리타기를 누르면 결과가 나옵니다. 사다리 선은 가려집니다.</p>
+        <div class="form-grid">
+          <div class="field">
+            <label for="ladder_count">인원 수 (칸)</label>
+            <input id="ladder_count" type="number" min="2" max="10" inputmode="numeric" value="4" />
+          </div>
+          <div class="field">
+            <label for="ladder_rows">가로줄 수</label>
+            <input id="ladder_rows" type="number" min="5" max="20" inputmode="numeric" value="10" />
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="ladderGenBtn">사다리 그리기</button>
+        </div>
+        <div id="ladderBoard" class="ladder-board" hidden>
+          <div class="ladder-stage" id="ladderStage">
+            <div class="ladder-slots" id="ladderTopSlots"></div>
+            <div class="ladder-svg-wrap" id="ladderSvgWrap"></div>
+            <div class="ladder-slots" id="ladderBotSlots"></div>
+          </div>
+        </div>
+        <div class="actions" id="ladderPlayWrap" hidden>
+          <button type="button" class="btn" id="ladderPlayBtn">사다리타기</button>
+        </div>
+        <div class="ladder-result" id="ladderResult" hidden></div>
+        <p class="note">브라우저에서만 처리되며, 입력 내용은 저장되지 않습니다.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script>
+    (function () {
+      var names = {
+        home: "홈",
+        calc: "계산 도구",
+        convert: "변환 도구",
+        work: "업무 보조",
+        lotto: "로또 생성기",
+        ladder: "사다리타기"
+      };
+
+      var navTopBtns = document.querySelectorAll(".nav > button[data-panel]");
+      var panels = document.querySelectorAll(".panel");
+      var crumbTrail = document.getElementById("crumbTrail");
+      var sidebar = document.getElementById("sidebar");
+      var backdrop = document.getElementById("backdrop");
+      var menuBtn = document.getElementById("menuBtn");
+
+      function showImageDownloadResult(blob, name, label, width, height) {
+        var dl = URL.createObjectURL(blob);
+        convertResult.innerHTML =
+          "<strong>변환 완료</strong>" +
+          fmtNum(blob.size / 1024, 1) + " KB · " + width + "×" + height +
+          '<p style="margin:12px 0 0"><a class="btn" download="' + name + '" href="' + dl + '">다운로드 (' + label + ")</a></p>";
+      }
+
+      function canvasToPdfBlob(canvas) {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          throw new Error("jspdf");
+        }
+        var w = canvas.width;
+        var h = canvas.height;
+        var pdf = new window.jspdf.jsPDF({
+          orientation: w >= h ? "landscape" : "portrait",
+          unit: "px",
+          format: [w, h],
+          compress: true
+        });
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, w, h, undefined, "FAST");
+        return pdf.output("blob");
+      }
+
+      var calcGroups = [
+        { id: "money", label: "돈·금융" },
+        { id: "health", label: "건강" },
+        { id: "date", label: "날짜·나이" }
+      ];
+      var convertGroups = [
+        { id: "fx", label: "환율" },
+        { id: "unit", label: "단위" },
+        { id: "file", label: "파일" },
+        { id: "code", label: "텍스트·코드" }
+      ];
+      var workGroups = [
+        { id: "doc", label: "문서" },
+        { id: "pay", label: "업무계산" },
+        { id: "make", label: "생성·확인" }
+      ];
+
+      var calcList = document.getElementById("calcList");
+      var calcDetail = document.getElementById("calcDetail");
+      var calcForm = document.getElementById("calcForm");
+      var calcResult = document.getElementById("calcResult");
+      var calcRef = document.getElementById("calcRef");
+      var currentCalc = null;
+
+      var convertList = document.getElementById("convertList");
+      var convertDetail = document.getElementById("convertDetail");
+      var convertForm = document.getElementById("convertForm");
+      var convertResult = document.getElementById("convertResult");
+      var convertRef = document.getElementById("convertRef");
+      var currentConvert = null;
+
+      var workList = document.getElementById("workList");
+      var workDetail = document.getElementById("workDetail");
+      var workForm = document.getElementById("workForm");
+      var workResult = document.getElementById("workResult");
+      var workRef = document.getElementById("workRef");
+      var currentWork = null;
+
+      var lottoList = document.getElementById("lottoList");
+      var lottoDetail = document.getElementById("lottoDetail");
+      var lottoTitle = document.getElementById("lottoTitle");
+      var lottoLead = document.getElementById("lottoLead");
+      var lottoOut = document.getElementById("lottoOut");
+      var lottoSets = document.getElementById("lotto_sets");
+      var lottoGenBtn = document.getElementById("lottoGenBtn");
+      var lottoDetailBack = document.getElementById("lottoDetailBack");
+      var lottoListBack = document.getElementById("lottoListBack");
+      var currentLottoMode = null;
+
+      var IMAGE_MAX_BYTES = 10 * 1024 * 1024;
+      var FRANKFURTER_RATE = "https://api.frankfurter.dev/v2/rate";
+      var FRANKFURTER_V1 = "https://api.frankfurter.dev/v1/latest";
+
+      function fetchFxRate(from, to) {
+        return fetch(
+          FRANKFURTER_RATE + "/" + encodeURIComponent(from) + "/" + encodeURIComponent(to)
+        )
+          .then(function (r) {
+            if (!r.ok) throw new Error("v2");
+            return r.json();
+          })
+          .then(function (data) {
+            if (!data.rate) throw new Error("rate");
+            return { rate: data.rate, date: data.date };
+          })
+          .catch(function () {
+            return fetch(
+              FRANKFURTER_V1 +
+                "?base=" +
+                encodeURIComponent(from) +
+                "&symbols=" +
+                encodeURIComponent(to)
+            )
+              .then(function (r) {
+                if (!r.ok) throw new Error("v1");
+                return r.json();
+              })
+              .then(function (data) {
+                var rate = data.rates && data.rates[to];
+                if (!rate) throw new Error("rate");
+                return { rate: rate, date: data.date };
+              });
+          });
+      }
+
+      function won(n) {
+        return Math.round(n).toLocaleString("ko-KR") + "원";
+      }
+      function num(id) {
+        var el = document.getElementById(id);
+        if (!el) return 0;
+        return parseFloat(String(el.value).replace(/,/g, "")) || 0;
+      }
+      function val(id) {
+        return document.getElementById(id).value;
+      }
+      function escHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+      function fmtNum(n, maxD) {
+        return Number(n).toLocaleString("ko-KR", {
+          maximumFractionDigits: maxD === undefined ? 6 : maxD
+        });
+      }
+      function unitConvert(value, units, fromKey, toKey) {
+        return (value * units[fromKey]) / units[toKey];
+      }
+      function formatCommaInput(el) {
+        if (!el) return;
+        function apply() {
+          var raw = String(el.value).replace(/[^\d]/g, "");
+          if (!raw) {
+            el.value = "";
+            return;
+          }
+          el.value = Number(raw).toLocaleString("ko-KR");
+        }
+        if (!el.dataset.commaBound) {
+          el.dataset.commaBound = "1";
+          el.addEventListener("input", apply);
+          el.addEventListener("blur", apply);
+        }
+        apply();
+      }
+      function formatMoneyInput(el, maxDec) {
+        if (!el) return;
+        maxDec = maxDec === undefined ? 2 : maxDec;
+        function apply() {
+          var s = String(el.value).replace(/,/g, "");
+          if (!s) {
+            el.value = "";
+            return;
+          }
+          var dot = s.indexOf(".");
+          var intRaw =
+            dot >= 0 ? s.slice(0, dot).replace(/[^\d]/g, "") : s.replace(/[^\d]/g, "");
+          var decRaw =
+            dot >= 0 ? s.slice(dot + 1).replace(/[^\d]/g, "").slice(0, maxDec) : "";
+          if (!intRaw && !decRaw) {
+            el.value = "";
+            return;
+          }
+          var out = Number(intRaw || "0").toLocaleString("ko-KR");
+          if (dot >= 0) out += "." + decRaw;
+          el.value = out;
+        }
+        if (!el.dataset.commaBound) {
+          el.dataset.commaBound = "1";
+          el.addEventListener("input", apply);
+          el.addEventListener("blur", apply);
+        }
+        apply();
+      }
+      function bindAmountInputs(root) {
+        if (!root) return;
+        root.querySelectorAll("input[data-amount]").forEach(function (el) {
+          if (el.dataset.decimal === "1") formatMoneyInput(el);
+          else formatCommaInput(el);
+        });
+      }
+      function fmtCurrency(n, code) {
+        if (code === "KRW") return won(Math.round(n));
+        return fmtNum(n, 2) + " " + code;
+      }
+      function clamp(n, lo, hi) {
+        return Math.min(hi, Math.max(lo, n));
+      }
+      function earnedIncomeDeduction(pay) {
+        if (pay <= 5000000) return pay * 0.7;
+        if (pay <= 15000000) return 3500000 + (pay - 5000000) * 0.4;
+        if (pay <= 45000000) return 7500000 + (pay - 15000000) * 0.15;
+        if (pay <= 100000000) return 12000000 + (pay - 45000000) * 0.05;
+        return Math.min(20000000, 14750000 + (pay - 100000000) * 0.02);
+      }
+      function incomeTaxFromBase(base) {
+        if (base <= 0) return 0;
+        if (base <= 14000000) return base * 0.06;
+        if (base <= 50000000) return base * 0.15 - 1260000;
+        if (base <= 88000000) return base * 0.24 - 5760000;
+        if (base <= 150000000) return base * 0.35 - 15440000;
+        if (base <= 300000000) return base * 0.38 - 19940000;
+        if (base <= 500000000) return base * 0.40 - 25940000;
+        if (base <= 1000000000) return base * 0.42 - 35940000;
+        return base * 0.45 - 65940000;
+      }
+      function earnedTaxCredit(calcTax, pay) {
+        var credit = calcTax <= 1300000
+          ? calcTax * 0.55
+          : 715000 + (calcTax - 1300000) * 0.3;
+        var cap;
+        if (pay <= 33000000) cap = 740000;
+        else if (pay <= 70000000) cap = Math.max(660000, 740000 - (pay - 33000000) * 0.008);
+        else cap = Math.max(500000, 660000 - (pay - 70000000) * 0.5);
+        return Math.min(credit, cap);
+      }
+
+      var tools = [
+        {
+          id: "salary",
+          rank: 1,
+          title: "연봉 실수령액",
+          desc: "4대보험·세금 공제 후 월 수령 추정",
+          lead: "연봉→실수령, 또는 실수령→연봉 역산을 선택해 계산합니다. 기준년도와 계산요소는 아래에서 확인하세요.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field" style="grid-column:1/-1"><label for="sal_mode">계산 방향</label>' +
+              '<select id="sal_mode">' +
+              '<option value="forward">연봉 → 실수령액</option>' +
+              '<option value="reverse">실수령액 → 연봉</option>' +
+              "</select></div>" +
+              '<div class="field" id="sal_forward_wrap"><label for="sal_year">연봉 (세전, 원)</label><input id="sal_year" type="text" inputmode="numeric" data-amount value="40,000,000" autocomplete="off"></div>' +
+              '<div class="field" id="sal_reverse_wrap" hidden><label for="sal_net">희망 월 실수령액 (원)</label><input id="sal_net" type="text" inputmode="numeric" data-amount value="3,000,000" autocomplete="off"></div>' +
+              '<div class="field"><label for="sal_depend">공제대상 가족 수 (본인 포함)</label><input id="sal_depend" type="number" value="1" min="1" max="10"></div>' +
+              "</div>"
+            );
+          },
+          afterRender: function () {
+            var mode = document.getElementById("sal_mode");
+            var fwd = document.getElementById("sal_forward_wrap");
+            var rev = document.getElementById("sal_reverse_wrap");
+            bindAmountInputs(calcForm);
+            if (!mode) return;
+            function sync() {
+              var isRev = mode.value === "reverse";
+              fwd.hidden = isRev;
+              rev.hidden = !isRev;
+            }
+            mode.addEventListener("change", sync);
+            sync();
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<p style=\"margin:0\">법령에 있는 <b>표준 산식</b>을 적용한 참고용입니다. 매월 원천징수는 국세청 간이세액표라 명세서와 다를 수 있습니다.</p>" +
+              "<table>" +
+              "<tr><th>국민연금</th><td>기준소득월액 × <b>4.75%</b> (국민연금법 · 근로자분)<br>하한 41만 · 상한 659만 원 적용</td></tr>" +
+              "<tr><th>건강보험</th><td>보수월액 × <b>3.595%</b> (국민건강보험법 · 근로자분)</td></tr>" +
+              "<tr><th>장기요양</th><td>건강보험료 × <b>13.14%</b></td></tr>" +
+              "<tr><th>고용보험</th><td>보수월액 × <b>0.9%</b> (실업급여분)</td></tr>" +
+              "<tr><th>총급여</th><td>(월급여 − 식대비과세) × 12 · 식대 한도 월 20만 원</td></tr>" +
+              "<tr><th>근로소득공제</th><td>소득세법 제47조 구간 공제 (한도 2,000만 원)</td></tr>" +
+              "<tr><th>인적공제</th><td>1인당 연 150만 원 (소득세법)</td></tr>" +
+              "<tr><th>보험료 소득공제</th><td>국민연금·건강·장기요양·고용 근로자부담 연액</td></tr>" +
+              "<tr><th>소득세</th><td>과세표준 × 기본세율 − 누진공제 (소득세법 제55조, 6~45%)</td></tr>" +
+              "<tr><th>근로소득세액공제</th><td>소득세법 제59조 (55%/30% · 한도)</td></tr>" +
+              "<tr><th>지방소득세</th><td>소득세 × 10%</td></tr>" +
+              "<tr><th>미반영</th><td>간이세액표 원천징수, 연말정산 추가공제, 상여 정산</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 법령 표준식 참고. 세무·신고·계약용 아님.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var R_PENSION = 0.0475;
+            var R_HEALTH = 0.03595;
+            var R_LONG = 0.1314;
+            var R_EMPLOY = 0.009;
+            var NON_TAX = 200000;
+            var P_LO = 410000;
+            var P_HI = 6590000;
+            var depend = num("sal_depend");
+
+            function fromMonthly(monthly) {
+              var nontax = Math.min(NON_TAX, monthly);
+              var basePay = Math.max(0, monthly - nontax);
+              var pension = clamp(basePay, P_LO, P_HI) * R_PENSION;
+              var health = basePay * R_HEALTH;
+              var longterm = health * R_LONG;
+              var employ = basePay * R_EMPLOY;
+              var annualGross = basePay * 12;
+              var eided = earnedIncomeDeduction(annualGross);
+              var personal = 1500000 * Math.max(1, depend);
+              var insDeduct = (pension + health + longterm + employ) * 12;
+              var taxable = Math.max(0, annualGross - eided - personal - insDeduct);
+              var calcTax = incomeTaxFromBase(taxable);
+              var credit = earnedTaxCredit(calcTax, annualGross);
+              var yearTax = Math.max(0, calcTax - credit);
+              var tax = yearTax / 12;
+              var local = tax * 0.1;
+              var net = monthly - pension - health - longterm - employ - tax - local;
+              return {
+                monthly: monthly,
+                basePay: basePay,
+                pension: pension,
+                health: health,
+                longterm: longterm,
+                employ: employ,
+                annualGross: annualGross,
+                eided: eided,
+                personal: personal,
+                taxable: taxable,
+                calcTax: calcTax,
+                credit: credit,
+                tax: tax,
+                local: local,
+                net: net
+              };
+            }
+
+            function renderBreakdown(r, title, subtitle) {
+              calcResult.innerHTML =
+                "<strong>" + title + "</strong>" +
+                subtitle +
+                '<table class="break-table">' +
+                "<tr><th>연봉(세전)</th><td>" + won(r.monthly * 12) + "</td></tr>" +
+                "<tr><th>월 세전</th><td>" + won(r.monthly) + "</td></tr>" +
+                "<tr><th>총급여(연, 비과세 제외)</th><td>" + won(r.annualGross) + "</td></tr>" +
+                "<tr><th>국민연금 (4.75% · 상하한)</th><td>− " + won(r.pension) + "</td></tr>" +
+                "<tr><th>건강보험 (3.595%)</th><td>− " + won(r.health) + "</td></tr>" +
+                "<tr><th>장기요양 (13.14%)</th><td>− " + won(r.longterm) + "</td></tr>" +
+                "<tr><th>고용보험 (0.9%)</th><td>− " + won(r.employ) + "</td></tr>" +
+                "<tr><th>근로소득공제(연)</th><td>" + won(r.eided) + "</td></tr>" +
+                "<tr><th>인적공제(연)</th><td>" + won(r.personal) + "</td></tr>" +
+                "<tr><th>과세표준(연)</th><td>" + won(r.taxable) + "</td></tr>" +
+                "<tr><th>산출세액(연)</th><td>" + won(r.calcTax) + "</td></tr>" +
+                "<tr><th>근로소득세액공제(연)</th><td>− " + won(r.credit) + "</td></tr>" +
+                "<tr><th>근로소득세(월)</th><td>− " + won(r.tax) + "</td></tr>" +
+                "<tr><th>지방소득세 (10%)</th><td>− " + won(r.local) + "</td></tr>" +
+                '<tr class="total"><td>월 실수령</td><td>' + won(r.net) + "</td></tr>" +
+                "</table>";
+            }
+
+            var mode = val("sal_mode");
+            var r;
+
+            if (mode === "reverse") {
+              var target = num("sal_net");
+              if (target <= 0) {
+                calcResult.innerHTML = "<strong>월 실수령액을 입력하세요</strong>";
+                return;
+              }
+              var lo = target;
+              var hi = Math.max(target * 2.5, target + 5000000);
+              var guard = 0;
+              while (fromMonthly(hi).net < target && guard < 20) {
+                hi *= 1.5;
+                guard++;
+              }
+              for (var i = 0; i < 60; i++) {
+                var mid = (lo + hi) / 2;
+                if (fromMonthly(mid).net < target) lo = mid;
+                else hi = mid;
+              }
+              r = fromMonthly(hi);
+              renderBreakdown(
+                r,
+                "필요 연봉 약 " + won(r.monthly * 12),
+                "기준년도 <b>" + RATE_YEAR + "년</b> · 소득세법 표준식 역산<br>" +
+                "목표 월 실수령 " + won(target) + " → 계산 월 실수령 " + won(r.net) +
+                " (차이 " + won(r.net - target) + ")"
+              );
+            } else {
+              r = fromMonthly(num("sal_year") / 12);
+              renderBreakdown(
+                r,
+                "월 실수령 약 " + won(r.net),
+                "기준년도 <b>" + RATE_YEAR + "년</b> · 소득세법 표준식<br>" +
+                "연 실수령 약 " + won(r.net * 12)
+              );
+            }
+          }
+        },
+        {
+          id: "loan",
+          rank: 2,
+          title: "대출 이자 (월 상환)",
+          desc: "원리금균등·원금균등 월 납입액",
+          lead: "원금·금리·기간으로 월 상환액을 계산합니다. 계산 방식과 기준은 아래에서 확인하세요.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="ln_prin">대출원금 (원)</label><input id="ln_prin" type="text" inputmode="numeric" data-amount value="100,000,000" autocomplete="off"></div>' +
+              '<div class="field"><label for="ln_rate">연 이자율 (%)</label><input id="ln_rate" type="number" value="4.5" min="0" step="0.1"></div>' +
+              '<div class="field"><label for="ln_years">기간 (년)</label><input id="ln_years" type="number" value="30" min="1" step="1"></div>' +
+              '<div class="field"><label for="ln_type">상환 방식</label><select id="ln_type"><option value="emi">원리금균등</option><option value="prin">원금균등</option></select></div>' +
+              "</div>"
+            );
+          },
+          afterRender: function () {
+            bindAmountInputs(calcForm);
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<p style=\"margin:0\">금융 수학의 <b>표준 상환 공식</b>입니다. 은행 약정·일수 계산과 다를 수 있습니다.</p>" +
+              "<table>" +
+              "<tr><th>기준년도</th><td><b>2026년</b> · 이자율은 직접 입력 (시중·정책금리 변동)</td></tr>" +
+              "<tr><th>원리금균등</th><td>매월 <b>원금+이자 합계가 동일</b>. 주담대에서 가장 흔한 방식<br>" +
+              "월상환액 = P × r(1+r)^n / ((1+r)^n − 1)<br>" +
+              "P=원금, r=연이율÷12, n=상환개월</td></tr>" +
+              "<tr><th>원금균등</th><td>매월 <b>원금은 동일</b>, 이자는 잔액에 따라 감소<br>" +
+              "월원금 = P÷n · 이자 = 잔액×r · 총이자 ≈ P(n+1)r/2</td></tr>" +
+              "<tr><th>이자 계산</th><td>월 복리(연이율÷12) · 거치기간 없음</td></tr>" +
+              "<tr><th>미반영</th><td>중도상환수수료, 거치, 변동금리 변경, 일수 보정, 인지세·보증료, DSR/DTI 한도</td></tr>" +
+              "<tr><th>참고</th><td>한국주택금융공사 등도 동일 상환 유형을 안내. 실제 납입액은 금융기관 스케줄 기준</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 참고용. 대출 계약·심사·상담용으로 쓰지 마세요.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var P = num("ln_prin");
+            var annualRate = num("ln_rate");
+            var r = annualRate / 100 / 12;
+            var years = num("ln_years");
+            var n = years * 12;
+            if (P <= 0 || n <= 0) {
+              calcResult.innerHTML = "<strong>원금과 기간을 입력하세요</strong>";
+              return;
+            }
+
+            if (val("ln_type") === "emi") {
+              var m = r === 0 ? P / n : (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+              var total = m * n;
+              var interest = total - P;
+              calcResult.innerHTML =
+                "<strong>월 상환 " + won(m) + "</strong>" +
+                "기준년도 <b>" + RATE_YEAR + "년</b> · 원리금균등 · 연 " + annualRate + "% · " + years + "년<br>" +
+                "총 상환 " + won(total) + " · 총 이자 " + won(interest) +
+                '<table class="break-table">' +
+                "<tr><th>대출원금</th><td>" + won(P) + "</td></tr>" +
+                "<tr><th>연 이자율</th><td>" + annualRate + "%</td></tr>" +
+                "<tr><th>월 이자율</th><td>" + (annualRate / 12).toFixed(4) + "% (연÷12)</td></tr>" +
+                "<tr><th>상환 개월</th><td>" + n.toLocaleString("ko-KR") + "개월</td></tr>" +
+                "<tr><th>상환 방식</th><td>원리금균등 (매월 동일)</td></tr>" +
+                "<tr><th>월 상환액</th><td>" + won(m) + "</td></tr>" +
+                "<tr><th>총 이자</th><td>" + won(interest) + "</td></tr>" +
+                '<tr class="total"><td>총 상환</td><td>' + won(total) + "</td></tr>" +
+                "</table>";
+            } else {
+              var principal = P / n;
+              var first = principal + P * r;
+              var last = principal + principal * r;
+              var interest2 = r === 0 ? 0 : (P * (n + 1) * r) / 2;
+              calcResult.innerHTML =
+                "<strong>첫 달 약 " + won(first) + "</strong>" +
+                "기준년도 <b>" + RATE_YEAR + "년</b> · 원금균등 · 연 " + annualRate + "% · " + years + "년<br>" +
+                "마지막 달 약 " + won(last) + " · 총 이자 약 " + won(interest2) +
+                '<table class="break-table">' +
+                "<tr><th>대출원금</th><td>" + won(P) + "</td></tr>" +
+                "<tr><th>연 이자율</th><td>" + annualRate + "%</td></tr>" +
+                "<tr><th>월 이자율</th><td>" + (annualRate / 12).toFixed(4) + "% (연÷12)</td></tr>" +
+                "<tr><th>상환 개월</th><td>" + n.toLocaleString("ko-KR") + "개월</td></tr>" +
+                "<tr><th>상환 방식</th><td>원금균등 (월 상환액 체감)</td></tr>" +
+                "<tr><th>매월 원금</th><td>" + won(principal) + "</td></tr>" +
+                "<tr><th>첫 달 상환</th><td>" + won(first) + "</td></tr>" +
+                "<tr><th>마지막 달 상환</th><td>" + won(last) + "</td></tr>" +
+                "<tr><th>총 이자</th><td>" + won(interest2) + "</td></tr>" +
+                '<tr class="total"><td>총 상환</td><td>' + won(P + interest2) + "</td></tr>" +
+                "</table>";
+            }
+          }
+        },
+        {
+          id: "bmi",
+          rank: 3,
+          title: "BMI (체질량지수)",
+          desc: "Body Mass Index · 키·몸무게로 계산",
+          lead: "BMI는 Body Mass Index, 한국어로는 체질량지수입니다. 키와 몸무게로 계산하고, 기준·한계는 아래에서 확인하세요.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="bmi_h">키 (cm)</label><input id="bmi_h" type="number" value="170" min="50" step="0.1"></div>' +
+              '<div class="field"><label for="bmi_w">몸무게 (kg)</label><input id="bmi_w" type="number" value="65" min="10" step="0.1"></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<p style=\"margin:0\"><b>BMI (Body Mass Index, 체질량지수)</b>는 몸무게(kg)를 키(m)의 제곱으로 나눈 값입니다. 체지방을 직접 재는 검사가 아니라 <b>키 대비 체중 지표</b>입니다.</p>" +
+              "<table>" +
+              "<tr><th>공식</th><td>BMI = 몸무게(kg) ÷ [키(m)]²</td></tr>" +
+              "<tr><th>단위</th><td>kg/m²</td></tr>" +
+              "<tr><th>이 계산기 판정</th><td><b>대한비만학회(한국) 기준</b>으로 구간을 표시합니다.</td></tr>" +
+              "<tr><th>한국 기준</th><td>저체중 &lt;18.5 · 정상 18.5–22.9 · 과체중 23–24.9<br>1단계 비만 25–29.9 · 2단계 30–34.9 · 3단계 ≥35</td></tr>" +
+              "<tr><th>WHO 국제 기준</th><td>저체중 &lt;18.5 · 정상 18.5–24.9 · 과체중 25–29.9 · 비만 ≥30<br>(아시아인은 같은 BMI에서도 대사 위험이 더 이른 편이라 한국 기준이 더 낮음)</td></tr>" +
+              "<tr><th>출처</th><td>WHO 체질량지수 분류 · 대한비만학회 진료지침(2022 개정 계열) · 세계보건기구 서태평양(WPRO) 아시아 기준</td></tr>" +
+              "<tr><th>한계</th><td>근육량·체지방·복부비만·연령·임신을 구분하지 않음. 허리둘레·체성분과 함께 보는 것이 정확합니다.</td></tr>" +
+              "<tr><th>미반영</th><td>소아·청소년 백분위, 허리둘레, 체지방률, 질환 진단</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 참고용. 건강 진단·진료·보험 심사용으로 쓰지 마세요.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var cm = num("bmi_h");
+            var w = num("bmi_w");
+            var h = cm / 100;
+            if (cm <= 0 || w <= 0) {
+              calcResult.innerHTML = "<strong>키와 몸무게를 입력하세요</strong>";
+              return;
+            }
+            var bmi = w / (h * h);
+            var kr =
+              bmi < 18.5 ? "저체중" :
+              bmi < 23 ? "정상" :
+              bmi < 25 ? "과체중" :
+              bmi < 30 ? "1단계 비만" :
+              bmi < 35 ? "2단계 비만" : "3단계 비만";
+            var who =
+              bmi < 18.5 ? "저체중" :
+              bmi < 25 ? "정상" :
+              bmi < 30 ? "과체중" : "비만";
+            calcResult.innerHTML =
+              "<strong>BMI " + bmi.toFixed(1) + "</strong>" +
+              "Body Mass Index · 체질량지수 · 기준년도 <b>" + RATE_YEAR + "년</b><br>" +
+              "한국(대한비만학회) 판정: <b>" + kr + "</b>" +
+              '<table class="break-table">' +
+              "<tr><th>키</th><td>" + cm + " cm (" + h.toFixed(2) + " m)</td></tr>" +
+              "<tr><th>몸무게</th><td>" + w + " kg</td></tr>" +
+              "<tr><th>공식</th><td>" + w + " ÷ " + h.toFixed(2) + "²</td></tr>" +
+              "<tr><th>BMI</th><td>" + bmi.toFixed(1) + " kg/m²</td></tr>" +
+              "<tr><th>한국 기준</th><td>" + kr + "</td></tr>" +
+              "<tr><th>WHO 국제 기준</th><td>" + who + "</td></tr>" +
+              '<tr class="total"><td>표시 판정</td><td>' + kr + " (한국)</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "acq",
+          rank: 4,
+          title: "취득세",
+          desc: "주택 취득세 표준 세율",
+          lead: "취득가액과 주택 구분을 넣으면 취득세·부가세를 계산합니다. 기준과 한계는 아래에서 확인하세요.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="acq_price">취득가액 (원)</label><input id="acq_price" type="text" inputmode="numeric" data-amount value="500,000,000" autocomplete="off" placeholder="예: 500,000,000"></div>' +
+              '<div class="field field-full"><label for="acq_type">세율 구분</label><select id="acq_type">' +
+              '<option value="1">1주택 · 일반세율 (누진)</option>' +
+              '<option value="8">다주택 등 · 중과 8%</option>' +
+              '<option value="12">다주택 등 · 중과 12%</option>' +
+              "</select></div>" +
+              "</div>"
+            );
+          },
+          afterRender: function () {
+            bindAmountInputs(calcForm);
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<p style=\"margin:0\">지방세법상 <b>주택 취득</b>에 대한 표준 세율입니다. 실제 납부액은 위택스·관할 자치단체 신고 결과가 기준입니다.</p>" +
+              "<table>" +
+              "<tr><th>취득세 (1주택)</th><td>6억 이하 <b>1%</b><br>6억~9억 <b>누진</b> (세율% = 가액(억) × 2/3 − 3)<br>9억 초과 <b>3%</b></td></tr>" +
+              "<tr><th>부가세 (1주택)</th><td>지방교육세 = 취득세 × <b>10%</b> · 농어촌특별세 없음</td></tr>" +
+              "<tr><th>중과 8%</th><td>취득세 8% + 농특세 1.6% + 지방교육세 0.4% (가액 기준)</td></tr>" +
+              "<tr><th>중과 12%</th><td>취득세 12% + 농특세 2.4% + 지방교육세 0.4%</td></tr>" +
+              "<tr><th>예시 (5억·1주택)</th><td>취득세 1% = 500만 · 지방교육세 50만 · 합계 550만</td></tr>" +
+              "<tr><th>출처</th><td>지방세법 제11조 · 지방교육세법 · 농어촌특별세법</td></tr>" +
+              "<tr><th>미반영</th><td>생애최초·신혼·조정대상·전용면적·감면·증여·상속·오피스텔·법인 취득</td></tr>" +
+              "<tr><th>주의</th><td>은행·부동산 안내 금액과 다를 수 있음. <b>신고·납부·계약용 아님</b></td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 법령 표준식 참고. 위택스(wetax.go.kr) 또는 세무사 확인.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var price = num("acq_price");
+            var type = val("acq_type");
+            if (price <= 0) {
+              calcResult.innerHTML = "<strong>취득가액을 입력하세요</strong>";
+              return;
+            }
+            var acq = 0, edu = 0, rural = 0, label = "", formula = "";
+            if (type === "1") {
+              var eok = price / 100000000;
+              var pct = eok <= 6 ? 1 : eok <= 9 ? (eok * 2 / 3 - 3) : 3;
+              acq = price * pct / 100;
+              edu = acq * 0.1;
+              rural = 0;
+              label = "1주택 일반세율";
+              formula = eok <= 6 ? "1% 고정" : eok <= 9
+                ? "누진 " + pct.toFixed(4) + "% (= " + eok.toFixed(2) + "억 × 2/3 − 3)"
+                : "3% 고정 (9억 초과)";
+            } else if (type === "8") {
+              acq = price * 0.08;
+              rural = price * 0.016;
+              edu = price * 0.004;
+              label = "중과 8%";
+              formula = "취득세 8% + 농특세 1.6% + 지방교육세 0.4%";
+            } else {
+              acq = price * 0.12;
+              rural = price * 0.024;
+              edu = price * 0.004;
+              label = "중과 12%";
+              formula = "취득세 12% + 농특세 2.4% + 지방교육세 0.4%";
+            }
+            var total = acq + edu + rural;
+            calcResult.innerHTML =
+              "<strong>납부 추정 " + won(total) + "</strong>" +
+              "지방세법 표준식 · 기준년도 <b>" + RATE_YEAR + "년</b> · " + label +
+              '<table class="break-table">' +
+              "<tr><th>취득가액</th><td>" + won(price) + "</td></tr>" +
+              "<tr><th>적용 공식</th><td>" + formula + "</td></tr>" +
+              "<tr><th>취득세</th><td>" + won(acq) + "</td></tr>" +
+              "<tr><th>지방교육세</th><td>" + won(edu) + "</td></tr>" +
+              "<tr><th>농어촌특별세</th><td>" + won(rural) + "</td></tr>" +
+              '<tr class="total"><td>합계</td><td>' + won(total) + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "compound",
+          rank: 5,
+          title: "적금",
+          desc: "월납 정기적금 · 단리",
+          lead: "매월 넣는 정기적금 만기 금액을 계산합니다. 은행 적금은 단리가 표준입니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="sv_month">매월 납입 (원)</label><input id="sv_month" type="text" inputmode="numeric" data-amount value="300,000" autocomplete="off"></div>' +
+              '<div class="field"><label for="sv_rate">연 이율 (%)</label><input id="sv_rate" type="number" value="3.5" min="0" step="0.1"></div>' +
+              '<div class="field"><label for="sv_years">기간 (년)</label><input id="sv_years" type="number" value="3" min="1" step="1"></div>' +
+              "</div>"
+            );
+          },
+          afterRender: function () {
+            bindAmountInputs(calcForm);
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<p style=\"margin:0\">국내 은행 <b>정기적금(월납)</b>의 <b>단리</b> 표준식입니다. 대출 이자 계산과는 다릅니다.</p>" +
+              "<table>" +
+              "<tr><th>대상</th><td>매월 같은 금액을 넣는 <b>적금</b> (예금 일시납·대출 아님)</td></tr>" +
+              "<tr><th>단리 적금</th><td>세전이자 = 월납입 × n × (n+1) / 2 × 연이율 / 12<br>n = 납입 개월 수</td></tr>" +
+              "<tr><th>세후</th><td>세후이자 = 세전이자 × (1 − 0.154) · 이자소득세 15.4%</td></tr>" +
+              "<tr><th>출처</th><td>은행 적금 단리 관행 · 소득세법 이자소득세율</td></tr>" +
+              "<tr><th>미반영</th><td>우대금리, 중도해지, 비과세 상품, 일수 계산</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 표준식 참고. 은행 만기 안내가 기준입니다.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var pmt = num("sv_month");
+            var annual = num("sv_rate");
+            var n = num("sv_years") * 12;
+            if (pmt <= 0 || n <= 0) {
+              calcResult.innerHTML = "<strong>납입액과 기간을 입력하세요</strong>";
+              return;
+            }
+            var paid = pmt * n;
+            var pretax = pmt * n * (n + 1) / 2 * (annual / 100) / 12;
+            var tax = pretax * 0.154;
+            var after = pretax - tax;
+            calcResult.innerHTML =
+              "<strong>세후 만기 " + won(paid + after) + "</strong>" +
+              "정기적금 단리 · 기준년도 <b>" + RATE_YEAR + "년</b> · 연 " + annual + "%" +
+              '<table class="break-table">' +
+              "<tr><th>매월 납입</th><td>" + won(pmt) + "</td></tr>" +
+              "<tr><th>납입 개월</th><td>" + n + "개월</td></tr>" +
+              "<tr><th>원금 합계</th><td>" + won(paid) + "</td></tr>" +
+              "<tr><th>세전 이자</th><td>" + won(pretax) + "</td></tr>" +
+              "<tr><th>이자과세 15.4%</th><td>− " + won(tax) + "</td></tr>" +
+              "<tr><th>세후 이자</th><td>" + won(after) + "</td></tr>" +
+              '<tr class="total"><td>세후 만기</td><td>' + won(paid + after) + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "calorie",
+          rank: 6,
+          title: "칼로리 / 기초대사량",
+          desc: "Mifflin-St Jeor · TDEE",
+          lead: "기초대사량은 Mifflin-St Jeor(1990) 표준식, 하루 소비량은 Harris-Benedict 활동계수입니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="cal_sex">성별</label><select id="cal_sex"><option value="m">남성</option><option value="f">여성</option></select></div>' +
+              '<div class="field"><label for="cal_age">나이</label><input id="cal_age" type="number" value="30" min="10" max="100"></div>' +
+              '<div class="field"><label for="cal_h">키 (cm)</label><input id="cal_h" type="number" value="170" min="50" step="0.1"></div>' +
+              '<div class="field"><label for="cal_w">몸무게 (kg)</label><input id="cal_w" type="number" value="65" min="10" step="0.1"></div>' +
+              '<div class="field"><label for="cal_act">활동량</label><select id="cal_act"><option value="1.2">비활동 (1.2)</option><option value="1.375" selected>가벼운 활동 (1.375)</option><option value="1.55">보통 (1.55)</option><option value="1.725">활발 (1.725)</option><option value="1.9">매우 활발 (1.9)</option></select></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<p style=\"margin:0\">현재 영양·의학에서 널리 쓰는 <b>Mifflin-St Jeor</b> 공식입니다. 진료·식단 처방용이 아닙니다.</p>" +
+              "<table>" +
+              "<tr><th>남성 BMR</th><td>10×체중(kg) + 6.25×키(cm) − 5×나이 + 5</td></tr>" +
+              "<tr><th>여성 BMR</th><td>10×체중(kg) + 6.25×키(cm) − 5×나이 − 161</td></tr>" +
+              "<tr><th>TDEE</th><td>BMR × 활동계수 (1.2 / 1.375 / 1.55 / 1.725 / 1.9)</td></tr>" +
+              "<tr><th>출처</th><td>Mifflin et al., Am J Clin Nutr (1990) · Harris-Benedict 활동계수</td></tr>" +
+              "<tr><th>미반영</th><td>체지방, 질병, 임신, 한국인 전용 보정</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 표준 추정식. 의료·영양 상담용 아님.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var w = num("cal_w");
+            var h = num("cal_h");
+            var age = num("cal_age");
+            var factor = parseFloat(val("cal_act"));
+            if (w <= 0 || h <= 0 || age <= 0) {
+              calcResult.innerHTML = "<strong>나이·키·몸무게를 입력하세요</strong>";
+              return;
+            }
+            var male = val("cal_sex") === "m";
+            var bmr = male ? 10 * w + 6.25 * h - 5 * age + 5 : 10 * w + 6.25 * h - 5 * age - 161;
+            var tdee = bmr * factor;
+            calcResult.innerHTML =
+              "<strong>BMR " + Math.round(bmr).toLocaleString("ko-KR") + " kcal</strong>" +
+              "Mifflin-St Jeor · 기준년도 <b>" + RATE_YEAR + "년</b>" +
+              '<table class="break-table">' +
+              "<tr><th>공식</th><td>10×" + w + " + 6.25×" + h + " − 5×" + age + (male ? " + 5" : " − 161") + "</td></tr>" +
+              "<tr><th>기초대사량 BMR</th><td>" + Math.round(bmr).toLocaleString("ko-KR") + " kcal</td></tr>" +
+              "<tr><th>활동계수</th><td>× " + factor + "</td></tr>" +
+              '<tr class="total"><td>하루 유지 TDEE</td><td>' + Math.round(tdee).toLocaleString("ko-KR") + " kcal</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "severance",
+          rank: 7,
+          title: "퇴직금",
+          desc: "근로자퇴직급여 보장법",
+          lead: "법정 퇴직금 표준식입니다. 월 환산 평균임금과 근속 연수로 계산합니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="sev_wage">평균임금 (월 환산, 원)</label><input id="sev_wage" type="text" inputmode="numeric" data-amount value="3,000,000" autocomplete="off"></div>' +
+              '<div class="field"><label for="sev_years">근속 연수</label><input id="sev_years" type="number" value="5" min="0" step="0.01"></div>' +
+              "</div>"
+            );
+          },
+          afterRender: function () {
+            bindAmountInputs(calcForm);
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<p style=\"margin:0\"><b>근로자퇴직급여 보장법 제8조</b> 표준식입니다.</p>" +
+              "<table>" +
+              "<tr><th>공식</th><td>퇴직금 = 1일 평균임금 × 30일 × 재직일수 ÷ 365</td></tr>" +
+              "<tr><th>1일 평균임금</th><td>월 환산 평균임금 ÷ 30</td></tr>" +
+              "<tr><th>30일</th><td>법정 상수 (1년 근속당 30일분)</td></tr>" +
+              "<tr><th>재직일수</th><td>근속연수 × 365</td></tr>" +
+              "<tr><th>출처</th><td>근로자퇴직급여 보장법 제8조 · 근로기준법 평균임금</td></tr>" +
+              "<tr><th>미반영</th><td>상여·연차 산입, DC/DB 퇴직연금, 퇴직소득세</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 법정 표준식 참고. 실제 평균임금·일수는 회사 산정이 기준.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var monthly = num("sev_wage");
+            var years = num("sev_years");
+            var days = years * 365;
+            var daily = monthly / 30;
+            var pay = daily * 30 * days / 365;
+            calcResult.innerHTML =
+              "<strong>퇴직금 " + won(pay) + "</strong>" +
+              "근로자퇴직급여 보장법 제8조 · 기준년도 <b>" + RATE_YEAR + "년</b>" +
+              '<table class="break-table">' +
+              "<tr><th>월 환산 평균임금</th><td>" + won(monthly) + "</td></tr>" +
+              "<tr><th>1일 평균임금</th><td>" + won(daily) + "</td></tr>" +
+              "<tr><th>근속 연수</th><td>" + years + "년</td></tr>" +
+              "<tr><th>재직일수</th><td>" + Math.round(days).toLocaleString("ko-KR") + "일</td></tr>" +
+              "<tr><th>공식</th><td>1일 평균임금 × 30 × 재직일수 ÷ 365</td></tr>" +
+              '<tr class="total"><td>법정 퇴직금</td><td>' + won(pay) + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "dday",
+          rank: 8,
+          title: "D-Day",
+          desc: "목표일까지 남은 날",
+          lead: "오늘 기준 목표일까지 남은(또는 지난) 일수입니다.",
+          fields: function () {
+            var today = new Date().toISOString().slice(0, 10);
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="dd_target">목표일</label><input id="dd_target" type="date" value="' + today + '"></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<table>" +
+              "<tr><th>공식</th><td>목표일 − 오늘 (역일 기준, 시간 제외)</td></tr>" +
+              "<tr><th>표기</th><td>당일 D-Day · 이전 D−n · 이후 D+n</td></tr>" +
+              "<tr><th>미반영</th><td>시간대, 윤초</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 날짜 차이 표준. 행사·시험 기준일과 맞추세요.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var target = new Date(val("dd_target"));
+            target.setHours(0, 0, 0, 0);
+            var diff = Math.round((target - today) / 86400000);
+            var dday = diff === 0 ? "D-Day" : diff > 0 ? "D-" + diff : "D+" + Math.abs(diff);
+            calcResult.innerHTML =
+              "<strong>" + dday + "</strong>" +
+              "기준년도 <b>" + RATE_YEAR + "년</b>" +
+              '<table class="break-table">' +
+              "<tr><th>오늘</th><td>" + today.toISOString().slice(0, 10) + "</td></tr>" +
+              "<tr><th>목표일</th><td>" + val("dd_target") + "</td></tr>" +
+              '<tr class="total"><td>일수 차</td><td>' + diff + "일</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "age",
+          rank: 9,
+          title: "나이 계산",
+          desc: "만나이 · 한국나이",
+          lead: "생년월일로 만나이와 한국나이(세는나이)를 함께 계산합니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="age_birth">생년월일</label><input id="age_birth" type="date" value="1990-01-01"></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<table>" +
+              "<tr><th>만나이</th><td>올해 − 출생연도, 생일이 아직이면 −1</td></tr>" +
+              "<tr><th>한국나이</th><td>올해 − 출생연도 + 1 (세는나이)</td></tr>" +
+              "<tr><th>출처</th><td>민법 제158조 · 「만 나이 통일법」(2023.6.28 시행)</td></tr>" +
+              "<tr><th>미반영</th><td>기준일 변경, 시간대</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 만나이는 법령 기준. 한국나이는 일상·관습상 세는나이입니다.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var birth = new Date(val("age_birth"));
+            birth.setHours(0, 0, 0, 0);
+            var intlAge = today.getFullYear() - birth.getFullYear();
+            var m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) intlAge--;
+            var koreanAge = today.getFullYear() - birth.getFullYear() + 1;
+            calcResult.innerHTML =
+              "<strong>만나이 " + intlAge + "세 · 한국나이 " + koreanAge + "세</strong>" +
+              "기준일 오늘 · 기준년도 <b>" + RATE_YEAR + "년</b>" +
+              '<table class="break-table">' +
+              "<tr><th>기준일</th><td>" + today.toISOString().slice(0, 10) + "</td></tr>" +
+              "<tr><th>생년월일</th><td>" + val("age_birth") + "</td></tr>" +
+              "<tr><th>만나이</th><td>" + intlAge + "세</td></tr>" +
+              '<tr class="total"><td>한국나이</td><td>' + koreanAge + "세</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "dsr",
+          rank: 10,
+          title: "DSR",
+          desc: "총부채원리금상환비율",
+          lead: "DSR은 Debt Service Ratio, 연소득 대비 모든 가계대출 연간 원리금 비율입니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="dsr_income">연 소득 (원)</label><input id="dsr_income" type="text" inputmode="numeric" data-amount value="50,000,000" autocomplete="off"></div>' +
+              '<div class="field"><label for="dsr_pay">연간 원리금 상환액 (원)</label><input id="dsr_pay" type="text" inputmode="numeric" data-amount value="15,000,000" autocomplete="off"></div>' +
+              "</div>"
+            );
+          },
+          afterRender: function () {
+            bindAmountInputs(calcForm);
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<p style=\"margin:0\"><b>DSR (Debt Service Ratio)</b> = 총부채원리금상환비율. 금융당국 가계대출 규제에 쓰는 표준 비율입니다.</p>" +
+              "<table>" +
+              "<tr><th>공식</th><td>DSR(%) = 연간 원리금 상환액 ÷ 연 소득 × 100</td></tr>" +
+              "<tr><th>규제 참고</th><td>은행권 등 흔히 <b>40%</b> 한도 (상품·차주·시기별 상이)</td></tr>" +
+              "<tr><th>40% 한도액</th><td>연소득 × 0.4 (이 화면의 비교용)</td></tr>" +
+              "<tr><th>출처</th><td>금융위원회·금융감독원 가계대출 DSR 규제</td></tr>" +
+              "<tr><th>미반영</th><td>스트레스 DSR, 소득 산정 방식, 전세대출 예외, 업권별 한도</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 비율 표준식 참고. 은행 심사·한도 확정용 아님.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var RATE_YEAR = 2026;
+            var income = num("dsr_income");
+            var pay = num("dsr_pay");
+            if (income <= 0) {
+              calcResult.innerHTML = "<strong>연 소득을 입력하세요</strong>";
+              return;
+            }
+            var dsr = (pay / income) * 100;
+            var cap = income * 0.4;
+            var ok = dsr <= 40 ? "40% 한도 이내 (참고)" : "40% 한도 초과 (참고)";
+            calcResult.innerHTML =
+              "<strong>DSR " + dsr.toFixed(1) + "%</strong>" +
+              "총부채원리금상환비율 · 기준년도 <b>" + RATE_YEAR + "년</b> · " + ok +
+              '<table class="break-table">' +
+              "<tr><th>공식</th><td>연간 원리금 ÷ 연소득 × 100</td></tr>" +
+              "<tr><th>연 소득</th><td>" + won(income) + "</td></tr>" +
+              "<tr><th>연간 원리금</th><td>" + won(pay) + "</td></tr>" +
+              "<tr><th>40% 한도 상환액</th><td>" + won(cap) + "</td></tr>" +
+              '<tr class="total"><td>DSR</td><td>' + dsr.toFixed(1) + "%</td></tr>" +
+              "</table>";
+          }
+        }
+      ];
+
+            var convertTools = [
+        {
+          id: "fx",
+          rank: 1,
+          group: "fx",
+          title: "환율 변환",
+          desc: "USD·JPY·EUR·CNY ↔ 원화",
+          lead: "Frankfurter API 기준환율로 금액을 변환합니다. 은행 환율·수수료와 다를 수 있습니다.",
+          runLabel: "변환하기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="fx_amt">금액</label><input id="fx_amt" type="text" inputmode="decimal" data-amount data-decimal="1" value="1,000" autocomplete="off"></div>' +
+              '<div class="field"><label for="fx_from">보내는 통화</label><select id="fx_from">' +
+              '<option value="USD">USD (달러)</option><option value="JPY">JPY (엔)</option>' +
+              '<option value="EUR">EUR (유로)</option><option value="CNY">CNY (위안)</option>' +
+              '<option value="KRW">KRW (원)</option></select></div>' +
+              '<div class="field"><label for="fx_to">받는 통화</label><select id="fx_to">' +
+              '<option value="KRW">KRW (원)</option><option value="USD">USD (달러)</option>' +
+              '<option value="JPY">JPY (엔)</option><option value="EUR">EUR (유로)</option>' +
+              '<option value="CNY">CNY (위안)</option></select></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고 <span class=\"year-tag\">기준년도 2026년</span></h3>" +
+              "<table>" +
+              "<tr><th>공식</th><td>결과 = 금액 × 기준환율</td></tr>" +
+              "<tr><th>데이터</th><td>Frankfurter API v2 (중앙은행 기준, API 키 불필요)</td></tr>" +
+              "<tr><th>엔드포인트</th><td>/v2/rate/{통화}/{통화} (구버전 v1 자동 대체)</td></tr>" +
+              "<tr><th>갱신</th><td>영업일 기준 (실시간 시장가·은행 창구와 다름)</td></tr>" +
+              "<tr><th>미반영</th><td>환전 수수료, 매매 스프레드, 카드·송금 수수료</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 참고 환율. 실제 거래는 금융기관 환율을 확인하세요.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var amount = num("fx_amt");
+            var from = val("fx_from");
+            var to = val("fx_to");
+            if (from === to) {
+              convertResult.hidden = false;
+              convertResult.innerHTML =
+                "<strong>" + fmtCurrency(amount, to) + "</strong>동일 통화입니다.";
+              return;
+            }
+            convertResult.hidden = false;
+            convertResult.innerHTML = "<strong>환율 조회 중…</strong>";
+            fetchFxRate(from, to)
+              .then(function (data) {
+                var rate = data.rate;
+                var out = amount * rate;
+                convertResult.innerHTML =
+                  "<strong>" + fmtCurrency(out, to) + "</strong>" +
+                  "기준일 <b>" + (data.date || "-") + "</b> · 1 " + from + " = " + fmtNum(rate, 4) + " " + to +
+                  '<table class="break-table">' +
+                  "<tr><th>입력</th><td>" + fmtCurrency(amount, from) + "</td></tr>" +
+                  "<tr><th>환율</th><td>1 " + from + " = " + fmtNum(rate, 4) + " " + to + "</td></tr>" +
+                  '<tr class="total"><td>결과</td><td>' + fmtCurrency(out, to) + "</td></tr>" +
+                  "</table>";
+              })
+              .catch(function () {
+                convertResult.innerHTML =
+                  "<strong>환율을 불러오지 못했습니다</strong>네트워크·통화 조합을 확인하거나 잠시 후 다시 시도하세요.";
+              });
+          }
+        },
+        {
+          id: "length",
+          rank: 2,
+          group: "unit",
+          title: "길이 변환",
+          desc: "cm · inch · mm · ft 등",
+          lead: "국제 표준 길이 환산입니다. 1 inch = 2.54 cm 기준입니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="len_val">값</label><input id="len_val" type="number" value="10" step="any"></div>' +
+              '<div class="field"><label for="len_from">변환 전</label><select id="len_from">' +
+              '<option value="cm">cm</option><option value="inch">inch</option><option value="mm">mm</option>' +
+              '<option value="m">m</option><option value="ft">ft</option><option value="km">km</option></select></div>' +
+              '<div class="field"><label for="len_to">변환 후</label><select id="len_to">' +
+              '<option value="inch">inch</option><option value="cm">cm</option><option value="mm">mm</option>' +
+              '<option value="m">m</option><option value="ft">ft</option><option value="km">km</option></select></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고</h3>" +
+              "<table>" +
+              "<tr><th>공식</th><td>결과 = 입력 × (전 단위→m) ÷ (후 단위→m)</td></tr>" +
+              "<tr><th>inch</th><td>1 inch = 2.54 cm (국제 야드파운드법)</td></tr>" +
+              "<tr><th>ft</th><td>1 ft = 12 inch = 0.3048 m</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: SI·야드파운드 표준 환산.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var u = { mm: 0.001, cm: 0.01, m: 1, km: 1000, inch: 0.0254, ft: 0.3048 };
+            var v = num("len_val");
+            var from = val("len_from");
+            var to = val("len_to");
+            var out = unitConvert(v, u, from, to);
+            convertResult.hidden = false;
+            convertResult.innerHTML =
+              "<strong>" + fmtNum(out, 6) + " " + to + "</strong>" +
+              '<table class="break-table">' +
+              "<tr><th>입력</th><td>" + fmtNum(v, 6) + " " + from + "</td></tr>" +
+              '<tr class="total"><td>결과</td><td>' + fmtNum(out, 6) + " " + to + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "pyeong",
+          rank: 3,
+          group: "unit",
+          title: "평수 ↔ ㎡",
+          desc: "부동산 면적 환산",
+          lead: "한국 평(坪)과 제곱미터(㎡) 상호 변환입니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="py_val">값</label><input id="py_val" type="number" value="24" step="any" min="0"></div>' +
+              '<div class="field"><label for="py_dir">방향</label><select id="py_dir">' +
+              '<option value="p2m">평 → ㎡</option><option value="m2p">㎡ → 평</option></select></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고</h3>" +
+              "<table>" +
+              "<tr><th>공식</th><td>1평 = 3.305785 ㎡</td></tr>" +
+              "<tr><th>㎡→평</th><td>평 = ㎡ ÷ 3.305785</td></tr>" +
+              "<tr><th>출처</th><td>국토교통부·관행적 평당 3.3058㎡ 환산</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 일반 환산값. 등기·계약서는 공인 측량 기준.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var PY = 3.305785;
+            var v = num("py_val");
+            var out = val("py_dir") === "p2m" ? v * PY : v / PY;
+            var fromL = val("py_dir") === "p2m" ? "평" : "㎡";
+            var toL = val("py_dir") === "p2m" ? "㎡" : "평";
+            convertResult.hidden = false;
+            convertResult.innerHTML =
+              "<strong>" + fmtNum(out, 4) + " " + toL + "</strong>" +
+              '<table class="break-table">' +
+              "<tr><th>입력</th><td>" + fmtNum(v, 4) + " " + fromL + "</td></tr>" +
+              '<tr class="total"><td>결과</td><td>' + fmtNum(out, 4) + " " + toL + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "weight",
+          rank: 4,
+          group: "unit",
+          title: "무게 변환",
+          desc: "kg · lb · g · oz",
+          lead: "질량 단위 표준 환산입니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="wt_val">값</label><input id="wt_val" type="number" value="70" step="any"></div>' +
+              '<div class="field"><label for="wt_from">변환 전</label><select id="wt_from">' +
+              '<option value="kg">kg</option><option value="lb">lb</option><option value="g">g</option><option value="oz">oz</option></select></div>' +
+              '<div class="field"><label for="wt_to">변환 후</label><select id="wt_to">' +
+              '<option value="lb">lb</option><option value="kg">kg</option><option value="g">g</option><option value="oz">oz</option></select></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고</h3>" +
+              "<table>" +
+              "<tr><th>공식</th><td>kg 기준 환산</td></tr>" +
+              "<tr><th>lb</th><td>1 lb = 0.45359237 kg</td></tr>" +
+              "<tr><th>oz</th><td>1 oz = 28.3495 g</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 국제 표준 환산.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var u = { g: 0.001, kg: 1, lb: 0.45359237, oz: 0.0283495 };
+            var v = num("wt_val");
+            var from = val("wt_from");
+            var to = val("wt_to");
+            var out = unitConvert(v, u, from, to);
+            convertResult.hidden = false;
+            convertResult.innerHTML =
+              "<strong>" + fmtNum(out, 6) + " " + to + "</strong>" +
+              '<table class="break-table">' +
+              "<tr><th>입력</th><td>" + fmtNum(v, 6) + " " + from + "</td></tr>" +
+              '<tr class="total"><td>결과</td><td>' + fmtNum(out, 6) + " " + to + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "temp",
+          rank: 5,
+          group: "unit",
+          title: "온도 변환",
+          desc: "°C ↔ °F",
+          lead: "섭씨와 화씨 상호 변환입니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="tp_val">값</label><input id="tp_val" type="number" value="25" step="any"></div>' +
+              '<div class="field"><label for="tp_from">변환 전</label><select id="tp_from">' +
+              '<option value="C">°C</option><option value="F">°F</option></select></div>' +
+              '<div class="field"><label for="tp_to">변환 후</label><select id="tp_to">' +
+              '<option value="F">°F</option><option value="C">°C</option></select></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고</h3>" +
+              "<table>" +
+              "<tr><th>°C→°F</th><td>°F = °C × 9/5 + 32</td></tr>" +
+              "<tr><th>°F→°C</th><td>°C = (°F − 32) × 5/9</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 수학 표준식.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var v = num("tp_val");
+            var from = val("tp_from");
+            var to = val("tp_to");
+            var out = from === to ? v : from === "C" ? (v * 9) / 5 + 32 : ((v - 32) * 5) / 9;
+            convertResult.hidden = false;
+            convertResult.innerHTML =
+              "<strong>" + fmtNum(out, 4) + " °" + to + "</strong>" +
+              '<table class="break-table">' +
+              "<tr><th>입력</th><td>" + fmtNum(v, 4) + " °" + from + "</td></tr>" +
+              '<tr class="total"><td>결과</td><td>' + fmtNum(out, 4) + " °" + to + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "imgfmt",
+          rank: 6,
+          group: "file",
+          title: "이미지 포맷",
+          desc: "JPG · PNG · WebP · PDF",
+          lead: "브라우저에서만 변환합니다. PDF는 1페이지 문서로 저장됩니다. 파일은 서버로 전송되지 않습니다.",
+          runLabel: "변환·다운로드",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="imgfmt_file">이미지 파일</label><input id="imgfmt_file" type="file" accept="image/*"></div>' +
+              '<div class="field"><label for="imgfmt_to">변환 형식</label><select id="imgfmt_to">' +
+              '<option value="jpg">JPG</option><option value="png">PNG</option><option value="webp">WebP</option>' +
+              '<option value="pdf">PDF</option></select></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고</h3>" +
+              "<table>" +
+              "<tr><th>처리</th><td>브라우저 Canvas (로컬만)</td></tr>" +
+              "<tr><th>용량</th><td>권장 10MB 이하 (1차 버전)</td></tr>" +
+              "<tr><th>JPG</th><td>품질 약 92% (손실 압축)</td></tr>" +
+              "<tr><th>PDF</th><td>이미지 1장 = PDF 1페이지 (페이지 크기 = 픽셀 크기, JPEG 내장)</td></tr>" +
+              "<tr><th>미반영</th><td>EXIF 유지, RAW, SVG, PDF→이미지</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 일반 포맷 변환. 인쇄용은 전문 툴 권장.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var fileEl = document.getElementById("imgfmt_file");
+            var file = fileEl && fileEl.files[0];
+            if (!file) {
+              convertResult.hidden = false;
+              convertResult.innerHTML = "<strong>파일을 선택하세요</strong>";
+              return;
+            }
+            if (file.size > IMAGE_MAX_BYTES) {
+              convertResult.hidden = false;
+              convertResult.innerHTML = "<strong>10MB 이하 파일만 지원합니다</strong>현재 " + fmtNum(file.size / 1048576, 2) + "MB";
+              return;
+            }
+            var fmt = val("imgfmt_to");
+            convertResult.hidden = false;
+            convertResult.innerHTML = "<strong>변환 중…</strong>";
+            var img = new Image();
+            var objUrl = URL.createObjectURL(file);
+            img.onload = function () {
+              var canvas = document.createElement("canvas");
+              canvas.width = img.naturalWidth;
+              canvas.height = img.naturalHeight;
+              canvas.getContext("2d").drawImage(img, 0, 0);
+              URL.revokeObjectURL(objUrl);
+              var baseName = file.name.replace(/\.[^.]+$/, "") || "image";
+
+              if (fmt === "pdf") {
+                try {
+                  var pdfBlob = canvasToPdfBlob(canvas);
+                  showImageDownloadResult(pdfBlob, baseName + ".pdf", "PDF", canvas.width, canvas.height);
+                } catch (err) {
+                  convertResult.innerHTML =
+                    err && err.message === "jspdf"
+                      ? "<strong>PDF 변환 라이브러리를 불러오지 못했습니다</strong>네트워크 연결 후 다시 시도하세요."
+                      : "<strong>PDF 변환에 실패했습니다</strong>이미지가 너무 크거나 형식을 지원하지 않을 수 있습니다.";
+                }
+                return;
+              }
+
+              var mime = fmt === "jpg" ? "image/jpeg" : fmt === "png" ? "image/png" : "image/webp";
+              canvas.toBlob(
+                function (blob) {
+                  if (!blob) {
+                    convertResult.innerHTML = "<strong>변환에 실패했습니다</strong>";
+                    return;
+                  }
+                  showImageDownloadResult(blob, baseName + "." + fmt, fmt.toUpperCase(), canvas.width, canvas.height);
+                },
+                mime,
+                fmt === "jpg" ? 0.92 : undefined
+              );
+            };
+            img.onerror = function () {
+              URL.revokeObjectURL(objUrl);
+              convertResult.innerHTML = "<strong>이미지를 읽을 수 없습니다</strong>";
+            };
+            img.src = objUrl;
+          }
+        },
+        {
+          id: "data",
+          rank: 7,
+          group: "unit",
+          title: "데이터 용량",
+          desc: "KB · MB · GB (10진/2진)",
+          lead: "저장 용량 단위 환산입니다. 10진(1000)과 2진(1024)을 선택할 수 있습니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="dat_val">값</label><input id="dat_val" type="number" value="1" step="any" min="0"></div>' +
+              '<div class="field"><label for="dat_std">체계</label><select id="dat_std">' +
+              '<option value="1000">10진 (1000)</option><option value="1024">2진 (1024, KiB)</option></select></div>' +
+              '<div class="field"><label for="dat_from">변환 전</label><select id="dat_from">' +
+              '<option value="GB">GB</option><option value="MB">MB</option><option value="KB">KB</option><option value="B">B</option></select></div>' +
+              '<div class="field"><label for="dat_to">변환 후</label><select id="dat_to">' +
+              '<option value="MB">MB</option><option value="GB">GB</option><option value="KB">KB</option><option value="B">B</option></select></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고</h3>" +
+              "<table>" +
+              "<tr><th>10진</th><td>1 KB = 1,000 B · 1 MB = 1,000 KB</td></tr>" +
+              "<tr><th>2진</th><td>1 KiB = 1,024 B · 1 MiB = 1,024 KiB</td></tr>" +
+              "<tr><th>표기</th><td>하드웨어·OS에 따라 혼용되므로 체계를 확인하세요</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 표준 환산. 제조사 표기(GB)는 10진인 경우가 많습니다.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var base = parseInt(val("dat_std"), 10);
+            var u = { B: 1, KB: base, MB: base * base, GB: base * base * base };
+            var v = num("dat_val");
+            var out = unitConvert(v, u, val("dat_from"), val("dat_to"));
+            convertResult.hidden = false;
+            convertResult.innerHTML =
+              "<strong>" + fmtNum(out, 6) + " " + val("dat_to") + "</strong>" +
+              "체계: " + (base === 1000 ? "10진 (1000)" : "2진 (1024)") +
+              '<table class="break-table">' +
+              "<tr><th>입력</th><td>" + fmtNum(v, 6) + " " + val("dat_from") + "</td></tr>" +
+              '<tr class="total"><td>결과</td><td>' + fmtNum(out, 6) + " " + val("dat_to") + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "volume",
+          rank: 8,
+          group: "unit",
+          title: "부피·용량",
+          desc: "L · ml · cup · gallon",
+          lead: "부피 단위 표준 환산입니다 (미국 customary gallon 기준).",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="vol_val">값</label><input id="vol_val" type="number" value="1" step="any"></div>' +
+              '<div class="field"><label for="vol_from">변환 전</label><select id="vol_from">' +
+              '<option value="L">L</option><option value="ml">ml</option><option value="cup">cup (US)</option><option value="gal">gallon (US)</option></select></div>' +
+              '<div class="field"><label for="vol_to">변환 후</label><select id="vol_to">' +
+              '<option value="ml">ml</option><option value="L">L</option><option value="cup">cup (US)</option><option value="gal">gallon (US)</option></select></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고</h3>" +
+              "<table>" +
+              "<tr><th>기준</th><td>리터(L) 기준</td></tr>" +
+              "<tr><th>cup</th><td>1 US cup = 236.588 ml</td></tr>" +
+              "<tr><th>gallon</th><td>1 US gal = 3.78541 L</td></tr>" +
+              "<tr><th>미반영</th><td>영국 imperial gallon</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: US customary 표준.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var u = { ml: 0.001, L: 1, cup: 0.236588, gal: 3.78541 };
+            var v = num("vol_val");
+            var from = val("vol_from");
+            var to = val("vol_to");
+            var out = unitConvert(v, u, from, to);
+            convertResult.hidden = false;
+            convertResult.innerHTML =
+              "<strong>" + fmtNum(out, 6) + " " + to + "</strong>" +
+              '<table class="break-table">' +
+              "<tr><th>입력</th><td>" + fmtNum(v, 6) + " " + from + "</td></tr>" +
+              '<tr class="total"><td>결과</td><td>' + fmtNum(out, 6) + " " + to + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "imgcompress",
+          rank: 9,
+          group: "file",
+          title: "이미지 압축",
+          desc: "품질·크기 줄이기",
+          lead: "브라우저에서 JPG/WebP로 압축합니다. 원본은 서버로 전송되지 않습니다.",
+          runLabel: "압축·다운로드",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="imgc_file">이미지 파일</label><input id="imgc_file" type="file" accept="image/*"></div>' +
+              '<div class="field"><label for="imgc_fmt">출력 형식</label><select id="imgc_fmt">' +
+              '<option value="jpg">JPG</option><option value="webp">WebP</option></select></div>' +
+              '<div class="field"><label for="imgc_q">품질 (%)</label><input id="imgc_q" type="number" value="80" min="10" max="100"></div>' +
+              '<div class="field"><label for="imgc_maxw">최대 너비 (px, 0=원본)</label><input id="imgc_maxw" type="number" value="1920" min="0" step="1"></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고</h3>" +
+              "<table>" +
+              "<tr><th>처리</th><td>Canvas 리사이즈 + 손실 압축</td></tr>" +
+              "<tr><th>용량</th><td>입력 10MB 이하 (1차 버전)</td></tr>" +
+              "<tr><th>품질</th><td>JPG/WebP quality 0.1~1.0</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 웹 공유·미리보기용. 인쇄 원본 보관은 별도 권장.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var fileEl = document.getElementById("imgc_file");
+            var file = fileEl && fileEl.files[0];
+            if (!file) {
+              convertResult.hidden = false;
+              convertResult.innerHTML = "<strong>파일을 선택하세요</strong>";
+              return;
+            }
+            if (file.size > IMAGE_MAX_BYTES) {
+              convertResult.hidden = false;
+              convertResult.innerHTML = "<strong>10MB 이하 파일만 지원합니다</strong>";
+              return;
+            }
+            var fmt = val("imgc_fmt");
+            var q = clamp(num("imgc_q"), 10, 100) / 100;
+            var maxW = num("imgc_maxw");
+            var mime = fmt === "jpg" ? "image/jpeg" : "image/webp";
+            convertResult.hidden = false;
+            convertResult.innerHTML = "<strong>압축 중…</strong>";
+            var img = new Image();
+            var objUrl = URL.createObjectURL(file);
+            img.onload = function () {
+              var w = img.naturalWidth;
+              var h = img.naturalHeight;
+              if (maxW > 0 && w > maxW) {
+                h = Math.round((h * maxW) / w);
+                w = maxW;
+              }
+              var canvas = document.createElement("canvas");
+              canvas.width = w;
+              canvas.height = h;
+              canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+              canvas.toBlob(
+                function (blob) {
+                  URL.revokeObjectURL(objUrl);
+                  if (!blob) {
+                    convertResult.innerHTML = "<strong>압축에 실패했습니다</strong>";
+                    return;
+                  }
+                  var dl = URL.createObjectURL(blob);
+                  var name = (file.name.replace(/\.[^.]+$/, "") || "image") + "_compressed." + fmt;
+                  var saved = file.size > 0 ? ((1 - blob.size / file.size) * 100).toFixed(1) : "0";
+                  convertResult.innerHTML =
+                    "<strong>압축 완료</strong>" +
+                    "원본 " + fmtNum(file.size / 1024, 1) + " KB → " + fmtNum(blob.size / 1024, 1) + " KB (약 " + saved + "% 감소)" +
+                    '<p style="margin:12px 0 0"><a class="btn" download="' + name + '" href="' + dl + '">다운로드</a></p>';
+                },
+                mime,
+                q
+              );
+            };
+            img.onerror = function () {
+              URL.revokeObjectURL(objUrl);
+              convertResult.innerHTML = "<strong>이미지를 읽을 수 없습니다</strong>";
+            };
+            img.src = objUrl;
+          }
+        },
+        {
+          id: "base64",
+          rank: 10,
+          group: "code",
+          title: "Base64",
+          desc: "인코딩 · 디코딩",
+          lead: "텍스트를 Base64로 변환하거나 복원합니다. 브라우저에서만 처리합니다.",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="b64_mode">모드</label><select id="b64_mode">' +
+              '<option value="enc">인코딩 (텍스트 → Base64)</option><option value="dec">디코딩 (Base64 → 텍스트)</option></select></div>' +
+              '<div class="field field-full"><label for="b64_text">입력</label><textarea id="b64_text" rows="5" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit">Hello</textarea></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box">' +
+              "<h3>계산 기준 · 참고</h3>" +
+              "<table>" +
+              "<tr><th>인코딩</th><td>UTF-8 → Base64 (btoa)</td></tr>" +
+              "<tr><th>디코딩</th><td>Base64 → UTF-8 (atob)</td></tr>" +
+              "<tr><th>용도</th><td>API·JWT·데이터 URI 등</td></tr>" +
+              "</table>" +
+              '<p class="warn-line">신뢰도: 표준 Base64. 바이너리 파일은 전용 도구 권장.</p>' +
+              "</div>"
+            );
+          },
+          run: function () {
+            var text = val("b64_text");
+            var mode = val("b64_mode");
+            convertResult.hidden = false;
+            try {
+              var out =
+                mode === "enc"
+                  ? btoa(unescape(encodeURIComponent(text)))
+                  : decodeURIComponent(escape(atob(text.replace(/\s/g, ""))));
+              convertResult.innerHTML =
+                "<strong>" + (mode === "enc" ? "인코딩 결과" : "디코딩 결과") + "</strong>" +
+                '<pre style="white-space:pre-wrap;word-break:break-all;margin:8px 0 0;font-size:0.9rem">' +
+                out +
+                "</pre>";
+            } catch (e) {
+              convertResult.innerHTML = "<strong>변환할 수 없습니다</strong>입력 형식을 확인하세요.";
+            }
+          }
+        }
+      ];
+
+      var workTools = [
+        {
+          id: "chars",
+          rank: 1,
+          group: "doc",
+          title: "글자수 세기",
+          desc: "공백 포함·제외 · 바이트",
+          lead: "붙여넣는 즉시 글자수와 바이트를 셉니다. 자기소개서·공고 글자 제한 확인용입니다.",
+          runLabel: "세기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="ch_text">텍스트</label>' +
+              '<textarea id="ch_text" rows="8" placeholder="여기에 붙여넣으세요"></textarea></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box"><h3>계산 기준 · 참고</h3><table>' +
+              "<tr><th>공백 포함</th><td>모든 문자(띄어쓰기·줄바꿈 포함)</td></tr>" +
+              "<tr><th>공백 제외</th><td>공백·탭·줄바꿈을 뺀 글자 수</td></tr>" +
+              "<tr><th>UTF-8</th><td>한글 보통 3바이트</td></tr>" +
+              "<tr><th>EUC-KR 추정</th><td>ASCII 1바이트, 그 외 2바이트 (채용사이트 관행)</td></tr>" +
+              "</table><p class=\"warn-line\">사이트마다 세는 기준이 다를 수 있습니다.</p></div>"
+            );
+          },
+          afterRender: function () {
+            var ta = document.getElementById("ch_text");
+            if (!ta) return;
+            function count() {
+              var s = ta.value;
+              var noSpace = s.replace(/\s/g, "");
+              var utf8 = new TextEncoder().encode(s).length;
+              var euc = 0;
+              for (var i = 0; i < s.length; i++) euc += s.charCodeAt(i) <= 0x7f ? 1 : 2;
+              workResult.hidden = false;
+              workResult.innerHTML =
+                "<strong>" + s.length.toLocaleString("ko-KR") + "자</strong>공백 포함" +
+                '<table class="break-table">' +
+                "<tr><th>공백 포함</th><td>" + s.length.toLocaleString("ko-KR") + "자</td></tr>" +
+                "<tr><th>공백 제외</th><td>" + noSpace.length.toLocaleString("ko-KR") + "자</td></tr>" +
+                "<tr><th>줄 수</th><td>" + (s ? s.split(/\n/).length : 0) + "</td></tr>" +
+                "<tr><th>UTF-8</th><td>" + utf8.toLocaleString("ko-KR") + " byte</td></tr>" +
+                '<tr class="total"><td>EUC-KR 추정</td><td>' + euc.toLocaleString("ko-KR") + " byte</td></tr>" +
+                "</table>";
+            }
+            ta.addEventListener("input", count);
+            count();
+          },
+          run: function () {
+            var ta = document.getElementById("ch_text");
+            if (ta) ta.dispatchEvent(new Event("input"));
+          }
+        },
+        {
+          id: "textdiff",
+          rank: 2,
+          group: "doc",
+          title: "텍스트 비교",
+          desc: "두 문서를 줄 단위로 비교",
+          lead: "왼쪽(원본)과 오른쪽(수정본)을 줄 단위로 비교합니다.",
+          runLabel: "비교하기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="td_a">원본</label><textarea id="td_a" rows="6"></textarea></div>' +
+              '<div class="field field-full"><label for="td_b">수정본</label><textarea id="td_b" rows="6"></textarea></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return '<div class="basis-box"><h3>참고</h3><p>같은 줄 번호끼리 비교합니다. 삽입·삭제가 많으면 줄이 밀려 보일 수 있습니다.</p></div>';
+          },
+          run: function () {
+            var a = (document.getElementById("td_a").value || "").split("\n");
+            var b = (document.getElementById("td_b").value || "").split("\n");
+            var max = Math.max(a.length, b.length);
+            var html = "";
+            var ch = 0;
+            for (var i = 0; i < max; i++) {
+              var L = a[i];
+              var R = b[i];
+              if (L === R) {
+                html += '<div class="diff-same">' + escHtml(L === undefined ? "" : L) + "</div>";
+              } else {
+                ch++;
+                if (L !== undefined) html += '<div class="diff-del">− ' + escHtml(L) + "</div>";
+                if (R !== undefined) html += '<div class="diff-add">+ ' + escHtml(R) + "</div>";
+              }
+            }
+            workResult.hidden = false;
+            workResult.innerHTML =
+              "<strong>다른 줄 " + ch + "곳</strong>" +
+              '<div style="margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden">' +
+              (html || '<div class="diff-same">(비어 있음)</div>') +
+              "</div>";
+          }
+        },
+        {
+          id: "jsonurl",
+          rank: 3,
+          group: "doc",
+          title: "JSON·URL 정리",
+          desc: "JSON 들여쓰기 · URL 인코딩",
+          lead: "JSON을 보기 좋게 만들거나 한 줄로 줄이고, URL을 인코딩·디코딩합니다.",
+          runLabel: "변환하기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="ju_mode">작업</label><select id="ju_mode">' +
+              '<option value="pretty">JSON 보기 좋게</option>' +
+              '<option value="mini">JSON 한 줄</option>' +
+              '<option value="enc">URL 인코딩</option>' +
+              '<option value="dec">URL 디코딩</option>' +
+              "</select></div>" +
+              '<div class="field field-full"><label for="ju_text">입력</label><textarea id="ju_text" rows="7">{"name":"셈공방","ok":true}</textarea></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return '<div class="basis-box"><h3>참고</h3><p>JSON은 표준 JSON만 처리합니다. 주석이 있으면 오류가 납니다. URL은 encodeURIComponent 기준입니다.</p></div>';
+          },
+          run: function () {
+            var mode = val("ju_mode");
+            var text = val("ju_text");
+            var out = "";
+            try {
+              if (mode === "pretty") out = JSON.stringify(JSON.parse(text), null, 2);
+              else if (mode === "mini") out = JSON.stringify(JSON.parse(text));
+              else if (mode === "enc") out = encodeURIComponent(text);
+              else out = decodeURIComponent(text);
+              workResult.hidden = false;
+              workResult.innerHTML =
+                "<strong>변환 결과</strong>" +
+                '<pre style="white-space:pre-wrap;word-break:break-all;margin:8px 0 0;font-size:0.88rem">' +
+                escHtml(out) + "</pre>";
+            } catch (e) {
+              workResult.hidden = false;
+              workResult.innerHTML = "<strong>변환할 수 없습니다</strong>형식을 확인하세요.";
+            }
+          }
+        },
+        {
+          id: "pdfmerge",
+          rank: 4,
+          group: "doc",
+          title: "PDF 합치기",
+          desc: "여러 PDF를 하나로 병합",
+          lead: "PDF를 고른 뒤 목록에서 순번을 정해 합칩니다. 위부터 아래 순서대로 이어집니다.",
+          runLabel: "합치기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="pdfm_files">PDF 추가</label>' +
+              '<input id="pdfm_files" type="file" accept="application/pdf,.pdf" multiple></div>' +
+              '<div class="field field-full"><div id="pdfm_list" class="file-list"></div></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box"><h3>참고</h3><table>' +
+              "<tr><th>순서</th><td>왼쪽 번호 또는 위/아래로 정합니다. 1번이 맨 앞입니다</td></tr>" +
+              "<tr><th>암호 PDF</th><td>암호가 걸린 파일은 합칠 수 없습니다</td></tr>" +
+              "<tr><th>권장</th><td>파일당 20MB 이하</td></tr>" +
+              "</table><p class=\"warn-line\">서버에 업로드하지 않습니다.</p></div>"
+            );
+          },
+          afterRender: function () {
+            var input = document.getElementById("pdfm_files");
+            var listEl = document.getElementById("pdfm_list");
+            var queue = [];
+            this._pdfQueue = queue;
+
+            function keyOf(f) {
+              return f.name + "|" + f.size + "|" + f.lastModified;
+            }
+
+            function renderList() {
+              if (!queue.length) {
+                listEl.innerHTML = '<p class="note" style="margin:0;padding:8px 0;border:0">아직 파일이 없습니다.</p>';
+                return;
+              }
+              listEl.innerHTML = queue
+                .map(function (f, i) {
+                  return (
+                    '<div class="file-list-item">' +
+                    '<input type="number" min="1" max="' + queue.length + '" value="' + (i + 1) + '" data-idx="' + i + '" aria-label="순번">' +
+                    '<div class="file-list-name" title="' + escHtml(f.name) + '">' + escHtml(f.name) +
+                    "<small>" + fmtNum(f.size / 1024, 1) + " KB</small></div>" +
+                    '<div class="file-list-btns">' +
+                    '<button type="button" data-act="up" data-idx="' + i + '"' + (i === 0 ? " disabled" : "") + ">위</button>" +
+                    '<button type="button" data-act="down" data-idx="' + i + '"' + (i === queue.length - 1 ? " disabled" : "") + ">아래</button>" +
+                    '<button type="button" data-act="del" data-idx="' + i + '">삭제</button>' +
+                    "</div></div>"
+                  );
+                })
+                .join("");
+            }
+
+            function moveTo(from, to) {
+              if (to < 0 || to >= queue.length || from === to) return;
+              var item = queue.splice(from, 1)[0];
+              queue.splice(to, 0, item);
+              renderList();
+            }
+
+            input.addEventListener("change", function () {
+              var added = Array.prototype.slice.call(input.files || []);
+              var seen = {};
+              queue.forEach(function (f) { seen[keyOf(f)] = true; });
+              added.forEach(function (f) {
+                if (!seen[keyOf(f)]) {
+                  queue.push(f);
+                  seen[keyOf(f)] = true;
+                }
+              });
+              input.value = "";
+              renderList();
+            });
+
+            listEl.addEventListener("click", function (e) {
+              var btn = e.target.closest("button");
+              if (!btn) return;
+              var idx = parseInt(btn.getAttribute("data-idx"), 10);
+              var act = btn.getAttribute("data-act");
+              if (act === "up") moveTo(idx, idx - 1);
+              else if (act === "down") moveTo(idx, idx + 1);
+              else if (act === "del") {
+                queue.splice(idx, 1);
+                renderList();
+              }
+            });
+
+            listEl.addEventListener("change", function (e) {
+              var el = e.target;
+              if (el.tagName !== "INPUT" || el.type !== "number") return;
+              var from = parseInt(el.getAttribute("data-idx"), 10);
+              var to = parseInt(el.value, 10) - 1;
+              if (!Number.isFinite(to)) {
+                renderList();
+                return;
+              }
+              if (to < 0) to = 0;
+              if (to > queue.length - 1) to = queue.length - 1;
+              moveTo(from, to);
+            });
+
+            renderList();
+          },
+          run: function () {
+            var files = this._pdfQueue || [];
+            if (!files.length) {
+              workResult.hidden = false;
+              workResult.innerHTML = "<strong>파일을 선택하세요</strong>PDF를 추가한 뒤 순번을 정하고 합치세요.";
+              return;
+            }
+            if (!window.PDFLib || !window.PDFLib.PDFDocument) {
+              workResult.hidden = false;
+              workResult.innerHTML = "<strong>라이브러리를 불러오지 못했습니다</strong>잠시 후 다시 시도하세요.";
+              return;
+            }
+            workResult.hidden = false;
+            workResult.innerHTML = "<strong>합치는 중…</strong>";
+            return window.PDFLib.PDFDocument.create()
+              .then(function (outDoc) {
+                var chain = Promise.resolve();
+                files.forEach(function (file) {
+                  chain = chain.then(function () {
+                    return file.arrayBuffer().then(function (buf) {
+                      return window.PDFLib.PDFDocument.load(buf).then(function (src) {
+                        return outDoc.copyPages(src, src.getPageIndices()).then(function (pages) {
+                          pages.forEach(function (p) { outDoc.addPage(p); });
+                        });
+                      });
+                    });
+                  });
+                });
+                return chain.then(function () { return outDoc.save(); });
+              })
+              .then(function (bytes) {
+                var blob = new Blob([bytes], { type: "application/pdf" });
+                var url = URL.createObjectURL(blob);
+                workResult.innerHTML =
+                  "<strong>합치기 완료</strong>" +
+                  files.length + "개 파일 · " + fmtNum(blob.size / 1024, 1) + " KB" +
+                  '<p style="margin:12px 0 0"><a class="btn" download="merged.pdf" href="' + url + '">다운로드</a></p>';
+              })
+              .catch(function () {
+                workResult.innerHTML = "<strong>합칠 수 없습니다</strong>암호 PDF이거나 손상된 파일일 수 있습니다.";
+              });
+          }
+        },
+        {
+          id: "overtime",
+          rank: 1,
+          group: "pay",
+          title: "근무시간·연장수당",
+          desc: "시급 × 연장 1.5 · 야간 0.5",
+          lead: "시급과 소정·연장·야간 시간을 넣으면 근로기준법상 가산(참고)으로 수당을 계산합니다.",
+          runLabel: "계산하기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="ot_wage">시급 (원)</label><input id="ot_wage" type="text" inputmode="numeric" data-amount value="12,000"></div>' +
+              '<div class="field"><label for="ot_reg">소정근로 (시간)</label><input id="ot_reg" type="number" min="0" step="0.5" value="8"></div>' +
+              '<div class="field"><label for="ot_ot">연장근로 (시간)</label><input id="ot_ot" type="number" min="0" step="0.5" value="2"></div>' +
+              '<div class="field"><label for="ot_night">야간근로 (시간)</label><input id="ot_night" type="number" min="0" step="0.5" value="0"></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box"><h3>계산 기준 · 참고</h3><table>' +
+              "<tr><th>소정</th><td>시급 × 시간</td></tr>" +
+              "<tr><th>연장</th><td>시급 × 1.5 × 시간 (근로기준법 제56조 취지)</td></tr>" +
+              "<tr><th>야간</th><td>시급 × 0.5 × 시간 (22:00~06:00 가산, 별도 입력)</td></tr>" +
+              "</table><p class=\"warn-line\">연장과 야간이 겹치면 각각 입력하세요. 실제 지급은 취업규칙·계약에 따릅니다.</p></div>"
+            );
+          },
+          run: function () {
+            var w = num("ot_wage");
+            var reg = num("ot_reg");
+            var ot = num("ot_ot");
+            var night = num("ot_night");
+            var payReg = w * reg;
+            var payOt = w * 1.5 * ot;
+            var payNight = w * 0.5 * night;
+            var total = payReg + payOt + payNight;
+            workResult.hidden = false;
+            workResult.innerHTML =
+              "<strong>" + won(total) + "</strong>추정 지급액" +
+              '<table class="break-table">' +
+              "<tr><th>소정</th><td>" + won(payReg) + "</td></tr>" +
+              "<tr><th>연장(1.5)</th><td>" + won(payOt) + "</td></tr>" +
+              "<tr><th>야간가산(0.5)</th><td>" + won(payNight) + "</td></tr>" +
+              '<tr class="total"><td>합계</td><td>' + won(total) + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "vat",
+          rank: 2,
+          group: "pay",
+          title: "부가세 계산",
+          desc: "공급가액 ↔ 합계(VAT 10%)",
+          lead: "부가세 10% 기준으로 공급가액·부가세·합계를 서로 환산합니다.",
+          runLabel: "계산하기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="vat_mode">계산 방향</label><select id="vat_mode">' +
+              '<option value="net">공급가액 → 합계</option>' +
+              '<option value="gross">합계 → 공급가액</option>' +
+              "</select></div>" +
+              '<div class="field"><label for="vat_amt">금액 (원)</label><input id="vat_amt" type="text" inputmode="numeric" data-amount value="1,000,000"></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box"><h3>계산 기준 · 참고</h3><table>' +
+              "<tr><th>세율</th><td>10%</td></tr>" +
+              "<tr><th>공급가 → 합계</th><td>합계 = 공급가 × 1.1, 부가세 = 공급가 × 0.1</td></tr>" +
+              "<tr><th>합계 → 공급가</th><td>공급가 = 합계 ÷ 1.1 (원 단위 반올림)</td></tr>" +
+              "</table><p class=\"warn-line\">면세·영세율·세금계산서 실무와 다를 수 있습니다.</p></div>"
+            );
+          },
+          run: function () {
+            var mode = val("vat_mode");
+            var amt = num("vat_amt");
+            var net, tax, gross;
+            if (mode === "net") {
+              net = Math.round(amt);
+              tax = Math.round(net * 0.1);
+              gross = net + tax;
+            } else {
+              gross = Math.round(amt);
+              net = Math.round(gross / 1.1);
+              tax = gross - net;
+            }
+            workResult.hidden = false;
+            workResult.innerHTML =
+              "<strong>" + won(gross) + "</strong>합계(부가세 포함)" +
+              '<table class="break-table">' +
+              "<tr><th>공급가액</th><td>" + won(net) + "</td></tr>" +
+              "<tr><th>부가세 10%</th><td>" + won(tax) + "</td></tr>" +
+              '<tr class="total"><td>합계</td><td>' + won(gross) + "</td></tr>" +
+              "</table>";
+          }
+        },
+        {
+          id: "timecalc",
+          rank: 3,
+          group: "pay",
+          title: "시간 계산",
+          desc: "시각 더하기 · 두 시각 사이",
+          lead: "시작 시각에 시간을 더하거나, 두 시각 사이 근무 시간을 계산합니다.",
+          runLabel: "계산하기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="tm_mode">계산</label><select id="tm_mode">' +
+              '<option value="add">시각 + 시간</option>' +
+              '<option value="span">두 시각 사이</option>' +
+              "</select></div>" +
+              '<div class="field"><label for="tm_start">시작</label><input id="tm_start" type="time" value="09:00"></div>' +
+              '<div class="field" id="tm_add_wrap"><label for="tm_hours">더할 시간</label><input id="tm_hours" type="number" min="0" step="0.25" value="8"></div>' +
+              '<div class="field" id="tm_end_wrap" hidden><label for="tm_end">종료</label><input id="tm_end" type="time" value="18:00"></div>' +
+              "</div>"
+            );
+          },
+          afterRender: function () {
+            var mode = document.getElementById("tm_mode");
+            function sync() {
+              var add = mode.value === "add";
+              document.getElementById("tm_add_wrap").hidden = !add;
+              document.getElementById("tm_end_wrap").hidden = add;
+            }
+            mode.addEventListener("change", sync);
+            sync();
+          },
+          ref: function () {
+            return '<div class="basis-box"><h3>참고</h3><p>자정을 넘기면 다음날로 계산합니다. 휴게시간 차감은 직접 반영하세요.</p></div>';
+          },
+          run: function () {
+            function parseHm(s) {
+              var p = String(s || "00:00").split(":");
+              return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0);
+            }
+            function fmtMin(m) {
+              var sign = m < 0 ? "-" : "";
+              m = Math.abs(m);
+              var h = Math.floor(m / 60);
+              var mm = m % 60;
+              return sign + h + "시간 " + mm + "분";
+            }
+            var mode = val("tm_mode");
+            var start = parseHm(val("tm_start"));
+            workResult.hidden = false;
+            if (mode === "add") {
+              var addMin = Math.round(num("tm_hours") * 60);
+              var end = start + addMin;
+              var day = Math.floor(end / (24 * 60));
+              end = ((end % (24 * 60)) + 24 * 60) % (24 * 60);
+              var hh = String(Math.floor(end / 60)).padStart(2, "0");
+              var mm = String(end % 60).padStart(2, "0");
+              workResult.innerHTML =
+                "<strong>" + hh + ":" + mm + "</strong>" +
+                (day ? " (+" + day + "일)" : "같은 날") +
+                '<table class="break-table"><tr><th>더한 시간</th><td>' + fmtMin(addMin) + "</td></tr></table>";
+            } else {
+              var endM = parseHm(val("tm_end"));
+              if (endM < start) endM += 24 * 60;
+              var span = endM - start;
+              workResult.innerHTML =
+                "<strong>" + fmtMin(span) + "</strong>" +
+                '<table class="break-table"><tr><th>분</th><td>' + span + "분</td></tr>" +
+                "<tr><th>시</th><td>" + fmtNum(span / 60, 2) + "시간</td></tr></table>";
+            }
+          }
+        },
+        {
+          id: "qr",
+          rank: 1,
+          group: "make",
+          title: "QR코드 생성",
+          desc: "URL·텍스트를 QR로",
+          lead: "링크나 문구를 QR코드 이미지로 만듭니다. 다운로드할 수 있습니다.",
+          runLabel: "생성하기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="qr_text">내용</label>' +
+              '<textarea id="qr_text" rows="3">https://</textarea></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return '<div class="basis-box"><h3>참고</h3><p>너무 긴 글은 인식이 떨어질 수 있습니다. Wi-Fi 형식 예: WIFI:T:WPA;S:네트워크이름;P:비밀번호;;</p></div>';
+          },
+          run: function () {
+            var text = val("qr_text").trim();
+            if (!text) {
+              workResult.hidden = false;
+              workResult.innerHTML = "<strong>내용을 입력하세요</strong>";
+              return;
+            }
+            if (typeof QRCode === "undefined") {
+              workResult.hidden = false;
+              workResult.innerHTML = "<strong>QR 라이브러리를 불러오지 못했습니다</strong>";
+              return;
+            }
+            workResult.hidden = false;
+            workResult.innerHTML = "<strong>만드는 중…</strong>";
+            return QRCode.toDataURL(text, { width: 280, margin: 1 })
+              .then(function (url) {
+                workResult.innerHTML =
+                  "<strong>QR코드</strong>" +
+                  '<div class="qr-preview"><img alt="QR코드" src="' + url + '"></div>' +
+                  '<p style="margin:12px 0 0"><a class="btn" download="qrcode.png" href="' + url + '">이미지 저장</a></p>';
+              })
+              .catch(function () {
+                workResult.innerHTML = "<strong>만들 수 없습니다</strong>내용이 너무 길 수 있습니다.";
+              });
+          }
+        },
+        {
+          id: "password",
+          rank: 2,
+          group: "make",
+          title: "비밀번호 생성",
+          desc: "길이·문자 종류를 골라 생성",
+          lead: "브라우저의 암호용 난수로 비밀번호를 만듭니다. 서버로 보내지 않습니다.",
+          runLabel: "생성하기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field"><label for="pw_len">길이</label><input id="pw_len" type="number" min="6" max="64" value="16"></div>' +
+              '<div class="field field-full"><label><input id="pw_upper" type="checkbox" checked> 영문 대문자</label></div>' +
+              '<div class="field field-full"><label><input id="pw_lower" type="checkbox" checked> 영문 소문자</label></div>' +
+              '<div class="field field-full"><label><input id="pw_num" type="checkbox" checked> 숫자</label></div>' +
+              '<div class="field field-full"><label><input id="pw_sym" type="checkbox"> 기호</label></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return '<div class="basis-box"><h3>참고</h3><p>생성된 비밀번호는 이 화면에만 있습니다. 반드시 안전한 곳에 따로 저장하세요.</p></div>';
+          },
+          run: function () {
+            var len = parseInt(val("pw_len"), 10);
+            if (!Number.isFinite(len) || len < 6) len = 6;
+            if (len > 64) len = 64;
+            var sets = [];
+            if (document.getElementById("pw_upper").checked) sets.push("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            if (document.getElementById("pw_lower").checked) sets.push("abcdefghijklmnopqrstuvwxyz");
+            if (document.getElementById("pw_num").checked) sets.push("0123456789");
+            if (document.getElementById("pw_sym").checked) sets.push("!@#$%^&*_+-=");
+            if (!sets.length) {
+              workResult.hidden = false;
+              workResult.innerHTML = "<strong>문자 종류를 하나 이상 고르세요</strong>";
+              return;
+            }
+            var all = sets.join("");
+            var chars = [];
+            var i;
+            for (i = 0; i < sets.length && i < len; i++) {
+              var pool = sets[i];
+              chars.push(pool[crypto.getRandomValues(new Uint32Array(1))[0] % pool.length]);
+            }
+            var buf = crypto.getRandomValues(new Uint32Array(len - chars.length));
+            for (i = 0; i < buf.length; i++) chars.push(all[buf[i] % all.length]);
+            for (i = chars.length - 1; i > 0; i--) {
+              var j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1);
+              var tmp = chars[i];
+              chars[i] = chars[j];
+              chars[j] = tmp;
+            }
+            var pw = chars.join("");
+            workResult.hidden = false;
+            workResult.innerHTML =
+              "<strong>생성됨</strong>" +
+              '<pre style="font-size:1.15rem;letter-spacing:0.04em;margin:10px 0 0;word-break:break-all">' +
+              escHtml(pw) + "</pre>";
+          }
+        },
+        {
+          id: "bizno",
+          rank: 3,
+          group: "make",
+          title: "사업자등록번호 확인",
+          desc: "10자리 체크디지트 검증",
+          lead: "사업자등록번호 형식과 끝자리 검증번호가 맞는지 확인합니다. 국세청 조회는 아닙니다.",
+          runLabel: "확인하기",
+          fields: function () {
+            return (
+              '<div class="form-grid">' +
+              '<div class="field field-full"><label for="biz_no">사업자등록번호</label>' +
+              '<input id="biz_no" type="text" inputmode="numeric" placeholder="000-00-00000" maxlength="12"></div>' +
+              "</div>"
+            );
+          },
+          ref: function () {
+            return (
+              '<div class="basis-box"><h3>계산 기준 · 참고</h3>' +
+              "<p>국세청 사업자등록번호 체크디지트(가중치 1,3,7,1,3,7,1,3,5)로 형식만 검사합니다.</p>" +
+              '<p class="warn-line">휴폐업·실존 여부는 홈택스에서 확인하세요.</p></div>'
+            );
+          },
+          run: function () {
+            var d = val("biz_no").replace(/\D/g, "");
+            workResult.hidden = false;
+            if (d.length !== 10) {
+              workResult.innerHTML = "<strong>10자리가 아닙니다</strong>숫자 10개를 입력하세요. (현재 " + d.length + "자리)";
+              return;
+            }
+            var w = [1, 3, 7, 1, 3, 7, 1, 3, 5];
+            var sum = 0;
+            for (var i = 0; i < 9; i++) sum += parseInt(d.charAt(i), 10) * w[i];
+            sum += Math.floor((parseInt(d.charAt(8), 10) * 5) / 10);
+            var check = (10 - (sum % 10)) % 10;
+            var ok = check === parseInt(d.charAt(9), 10);
+            var pretty = d.slice(0, 3) + "-" + d.slice(3, 5) + "-" + d.slice(5);
+            workResult.innerHTML = ok
+              ? "<strong>형식 유효</strong>" + pretty
+              : "<strong>형식이 올바르지 않습니다</strong>" + pretty + " (체크디지트 불일치)";
+          }
+        }
+      ];
+
+
+      var toolGroupMap = {
+        salary: "money",
+        loan: "money",
+        bmi: "health",
+        acq: "money",
+        compound: "money",
+        calorie: "health",
+        severance: "money",
+        dday: "date",
+        age: "date",
+        dsr: "money"
+      };
+      tools.forEach(function (t) {
+        t.group = toolGroupMap[t.id] || "money";
+      });
+
+      function groupedTools(toolList, groups) {
+        return groups
+          .map(function (g) {
+            return {
+              group: g,
+              tools: toolList.filter(function (t) {
+                return t.group === g.id;
+              })
+            };
+          })
+          .filter(function (row) {
+            return row.tools.length > 0;
+          });
+      }
+
+      function renderToolCard(t) {
+        return (
+          '<article class="tool clickable" data-tool="' + t.id + '">' +
+          "<h3>" + t.title + "</h3>" +
+          "<p>" + t.desc + "</p>" +
+          "</article>"
+        );
+      }
+
+      function renderGroupedGrid(container, toolList, groups, emptyMsg, onOpen) {
+        var rows = groupedTools(toolList, groups);
+        if (!rows.length) {
+          container.innerHTML = '<p class="note">' + emptyMsg + "</p>";
+          return;
+        }
+        container.innerHTML = rows
+          .map(function (row) {
+            return (
+              '<section class="tool-section">' +
+              '<h2 class="tool-section-title">' + row.group.label + "</h2>" +
+              '<div class="grid">' +
+              row.tools.map(renderToolCard).join("") +
+              "</div></section>"
+            );
+          })
+          .join("");
+        container.querySelectorAll("[data-tool]").forEach(function (el) {
+          el.addEventListener("click", function () {
+            var tool = toolList.find(function (t) {
+              return t.id === el.getAttribute("data-tool");
+            });
+            if (tool && onOpen) onOpen(tool);
+          });
+        });
+      }
+
+      function updateCrumb(segments) {
+        crumbTrail.innerHTML = "";
+        segments.forEach(function (seg, i) {
+          if (i > 0) {
+            var sep = document.createElement("span");
+            sep.className = "crumb-sep";
+            sep.textContent = "›";
+            sep.setAttribute("aria-hidden", "true");
+            crumbTrail.appendChild(sep);
+          }
+          if (i === segments.length - 1) {
+            var cur = document.createElement("span");
+            cur.className = "crumb-current";
+            cur.setAttribute("aria-current", "page");
+            cur.textContent = seg.label;
+            crumbTrail.appendChild(cur);
+          } else {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "crumb-link";
+            btn.textContent = seg.label;
+            btn.addEventListener("click", seg.action);
+            crumbTrail.appendChild(btn);
+          }
+        });
+      }
+
+      function goHome() {
+        history.pushState({ page: "home" }, "");
+        openPanel("home", true);
+      }
+
+      function navigate(state) {
+        if (!state) { openPanel("home", true); return; }
+        if (state.page === "home") { openPanel("home", true); }
+        else if (state.page === "calc") { openPanel("calc", true); }
+        else if (state.page === "convert") { openPanel("convert", true); }
+        else if (state.page === "work") { openPanel("work", true); }
+        else if (state.page === "workDetail") {
+          var tw = workTools.find(function(x){ return x.id === state.toolId; });
+          if (tw) { openPanel("work", true); openWorkDirect(tw); }
+        }
+        else if (state.page === "lotto") { openPanel("lotto", true); }
+        else if (state.page === "ladder") { openPanel("ladder", true); }
+        else if (state.page === "lottoDetail") {
+          openPanel("lotto", true);
+          openLottoMode(state.mode, true);
+        }
+        else if (state.page === "calcDetail") {
+          var t = tools.find(function(x){ return x.id === state.toolId; });
+          if (t) { openPanel("calc", true); openCalcDirect(t); }
+        } else if (state.page === "convertDetail") {
+          var t = convertTools.find(function(x){ return x.id === state.toolId; });
+          if (t) { openPanel("convert", true); openConvertDirect(t); }
+        }
+      }
+
+      window.addEventListener("popstate", function(e) {
+        navigate(e.state);
+      });
+
+      function setTopActive(id) {
+        navTopBtns.forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-panel") === id);
+        });
+      }
+
+      function resetCalcList() {
+        calcList.classList.add("show");
+        calcDetail.classList.remove("show");
+        currentCalc = null;
+      }
+
+      function resetConvertList() {
+        convertList.classList.add("show");
+        convertDetail.classList.remove("show");
+        currentConvert = null;
+      }
+
+      function resetWorkList() {
+        if (!workList || !workDetail) return;
+        workList.classList.add("show");
+        workDetail.classList.remove("show");
+        currentWork = null;
+      }
+
+      function resetLottoList() {
+        if (!lottoList || !lottoDetail) return;
+        lottoList.classList.add("show");
+        lottoDetail.classList.remove("show");
+        currentLottoMode = null;
+        lottoOut && (lottoOut.hidden = true);
+        var customWrap = document.getElementById("lottoCustomWrap");
+        if (customWrap) customWrap.hidden = true;
+      }
+
+      function showLottoList() {
+        resetLottoList();
+        updateCrumb([
+          { label: "홈", action: goHome },
+          { label: "로또 생성기" }
+        ]);
+      }
+
+      function openLottoMode(mode, skipHistory) {
+        var m = parseInt(mode, 10);
+        if (!Number.isFinite(m) || m < 1 || m > 7) m = 1;
+        if (!skipHistory) {
+          history.pushState({ page: "lottoDetail", mode: m }, "");
+        }
+
+        currentLottoMode = m;
+
+        lottoList.classList.remove("show");
+        lottoDetail.classList.add("show");
+
+        var title = "로또생성기" + m;
+        var lead =
+          m === 1
+            ? "랜덤 방식으로 6개 번호를 생성합니다."
+            : m === 2
+              ? "균형형: 홀짝 3:3 + 저/고 3:3을 맞추도록 생성합니다."
+              : "연속 최소형: 연속(3개 연속 등)이 너무 많지 않게 생성합니다.";
+
+        // 4~6 프리셋 설명
+        if (m === 4) {
+          lead = "공격형: 높은 수(23~45) 비중을 늘리고, 연속쏠림을 줄이도록 생성합니다.";
+        } else if (m === 5) {
+          lead = "보수형: 낮은 수(1~22) 비중을 늘리고, 구간 다양성을 챙기도록 생성합니다.";
+        } else if (m === 6) {
+          lead = "분산형: 10단위 구간을 넓게 쓰고, 특정 구간 몰림과 과도한 연속을 줄이도록 생성합니다.";
+        } else if (m === 7) {
+          lead = "커스텀: 홀짝, 저/고, 연속, 합계, 구간을 직접 고른 뒤 6개 번호를 생성합니다.";
+        }
+
+        var customWrap = document.getElementById("lottoCustomWrap");
+        if (customWrap) customWrap.hidden = m !== 7;
+
+        lottoTitle.textContent = title;
+        lottoLead.textContent = lead;
+        if (lottoOut) {
+          lottoOut.hidden = true;
+          lottoOut.innerHTML = "";
+        }
+
+        updateCrumb([
+          { label: "홈", action: goHome },
+          {
+            label: "로또 생성기",
+            action: function () { openPanel("lotto", true); }
+          },
+          { label: title }
+        ]);
+        setTopActive("lotto");
+        closeMenu();
+      }
+
+      function showCalcList() {
+        resetCalcList();
+        updateCrumb([
+          { label: "홈", action: goHome },
+          { label: "계산 도구" }
+        ]);
+      }
+
+      function showConvertList() {
+        resetConvertList();
+        updateCrumb([
+          { label: "홈", action: goHome },
+          { label: "변환 도구" }
+        ]);
+      }
+
+      function showWorkList() {
+        resetWorkList();
+        updateCrumb([
+          { label: "홈", action: goHome },
+          { label: "업무 보조" }
+        ]);
+      }
+
+      function openWorkDirect(tool) {
+        currentWork = tool;
+        currentCalc = null;
+        currentConvert = null;
+        workList.classList.remove("show");
+        workDetail.classList.add("show");
+        document.getElementById("workTitle").textContent = tool.title;
+        document.getElementById("workLead").textContent = tool.lead;
+        workForm.innerHTML = tool.fields();
+        bindAmountInputs(workForm);
+        workRef.innerHTML = tool.ref ? tool.ref() : "";
+        workResult.hidden = true;
+        workResult.innerHTML = "";
+        document.getElementById("workRun").textContent = tool.runLabel || "실행";
+        if (tool.afterRender) tool.afterRender();
+        updateCrumb([
+          { label: "홈", action: goHome },
+          { label: "업무 보조", action: function () { openPanel("work"); } },
+          { label: tool.title }
+        ]);
+        setTopActive("work");
+        panels.forEach(function (p) {
+          p.classList.toggle("active", p.id === "panel-work");
+        });
+        closeMenu();
+      }
+
+      function openWork(tool) {
+        history.pushState({ page: "workDetail", toolId: tool.id }, "");
+        openWorkDirect(tool);
+      }
+
+      function openConvertDirect(tool) {
+        currentConvert = tool;
+        currentCalc = null;
+        convertList.classList.remove("show");
+        convertDetail.classList.add("show");
+        document.getElementById("convertTitle").textContent = tool.title;
+        document.getElementById("convertLead").textContent = tool.lead;
+        convertForm.innerHTML = tool.fields();
+        bindAmountInputs(convertForm);
+        convertRef.innerHTML = tool.ref ? tool.ref() : "";
+        if (tool.afterRender) tool.afterRender();
+        convertResult.hidden = true;
+        convertResult.innerHTML = "";
+        document.getElementById("convertRun").textContent = tool.runLabel || "변환하기";
+        updateCrumb([
+          { label: "홈", action: goHome },
+          { label: "변환 도구", action: function () { openPanel("convert"); } },
+          { label: tool.title }
+        ]);
+        setTopActive("convert");
+        panels.forEach(function (p) {
+          p.classList.toggle("active", p.id === "panel-convert");
+        });
+        closeMenu();
+      }
+
+      function openConvert(tool) {
+        history.pushState({ page: "convertDetail", toolId: tool.id }, "");
+        openConvertDirect(tool);
+      }
+
+      function openCalcDirect(tool) {
+        currentCalc = tool;
+        currentConvert = null;
+        calcList.classList.remove("show");
+        calcDetail.classList.add("show");
+        document.getElementById("calcTitle").textContent = tool.title;
+        document.getElementById("calcLead").textContent = tool.lead;
+        calcForm.innerHTML = tool.fields();
+        bindAmountInputs(calcForm);
+        calcRef.innerHTML = tool.ref ? tool.ref() : "";
+        if (tool.afterRender) tool.afterRender();
+        calcResult.hidden = true;
+        calcResult.innerHTML = "";
+        updateCrumb([
+          { label: "홈", action: goHome },
+          { label: "계산 도구", action: function () { openPanel("calc"); } },
+          { label: tool.title }
+        ]);
+        setTopActive("calc");
+        panels.forEach(function (p) {
+          p.classList.toggle("active", p.id === "panel-calc");
+        });
+        closeMenu();
+      }
+
+      function openCalc(tool) {
+        history.pushState({ page: "calcDetail", toolId: tool.id }, "");
+        openCalcDirect(tool);
+      }
+
+      function renderCalcGrid() {
+        renderGroupedGrid(
+          document.getElementById("calcToolGrid"),
+          tools,
+          calcGroups,
+          "계산 도구를 준비 중입니다.",
+          openCalc
+        );
+        renderGroupedGrid(
+          document.getElementById("convertToolGrid"),
+          convertTools,
+          convertGroups,
+          "변환 도구를 준비 중입니다.",
+          openConvert
+        );
+        renderGroupedGrid(
+          document.getElementById("workToolGrid"),
+          workTools,
+          workGroups,
+          "업무 보조 도구를 준비 중입니다.",
+          openWork
+        );
+      }
+
+      function openPanel(id, skipHistory) {
+        if (!skipHistory) {
+          history.pushState({ page: id }, "");
+        }
+        setTopActive(id);
+        panels.forEach(function (p) {
+          p.classList.toggle("active", p.id === "panel-" + id);
+        });
+        if (id === "home") {
+          resetCalcList();
+          resetConvertList();
+          resetWorkList();
+          resetLottoList();
+          updateCrumb([{ label: "홈" }]);
+        } else if (id === "calc") {
+          showCalcList();
+        } else if (id === "convert") {
+          showConvertList();
+        } else if (id === "work") {
+          showWorkList();
+        } else if (id === "lotto") {
+          showLottoList();
+        } else {
+          updateCrumb([
+            { label: "홈", action: goHome },
+            { label: names[id] || id }
+          ]);
+        }
+        closeMenu();
+      }
+
+      function openMenu() {
+        sidebar.classList.add("open");
+        backdrop.hidden = false;
+        backdrop.classList.add("show");
+      }
+      function closeMenu() {
+        sidebar.classList.remove("open");
+        backdrop.classList.remove("show");
+        backdrop.hidden = true;
+      }
+
+      navTopBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          openPanel(btn.getAttribute("data-panel"));
+        });
+      });
+
+      menuBtn.addEventListener("click", openMenu);
+      backdrop.addEventListener("click", closeMenu);
+
+      document.getElementById("calcListBack").addEventListener("click", goHome);
+      document.getElementById("calcDetailBack").addEventListener("click", function () {
+        openPanel("calc");
+      });
+      document.getElementById("convertListBack").addEventListener("click", goHome);
+      document.getElementById("convertDetailBack").addEventListener("click", function () {
+        openPanel("convert");
+      });
+      document.getElementById("workListBack").addEventListener("click", goHome);
+      document.getElementById("workDetailBack").addEventListener("click", function () {
+        openPanel("work");
+      });
+
+      // 사다리타기
+      var ladderBack = document.getElementById("ladderBack");
+      var ladderCountInput = document.getElementById("ladder_count");
+      var ladderRowsInput = document.getElementById("ladder_rows");
+      var ladderGenBtn = document.getElementById("ladderGenBtn");
+      var ladderPlayBtn = document.getElementById("ladderPlayBtn");
+      var ladderPlayWrap = document.getElementById("ladderPlayWrap");
+      var ladderBoard = document.getElementById("ladderBoard");
+      var ladderStage = document.getElementById("ladderStage");
+      var ladderTopSlots = document.getElementById("ladderTopSlots");
+      var ladderBotSlots = document.getElementById("ladderBotSlots");
+      var ladderSvgWrap = document.getElementById("ladderSvgWrap");
+      var ladderResult = document.getElementById("ladderResult");
+      var ladderState = null;
+
+      ladderBack.addEventListener("click", goHome);
+
+      function ladderEsc(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function ladderGenerateBridges(cols, numRows) {
+        var bridges = [];
+        for (var r = 0; r < numRows; r++) {
+          var row = new Array(cols - 1).fill(false);
+          var c = 0;
+          while (c < cols - 1) {
+            if (Math.random() < 0.42) {
+              row[c] = true;
+              c += 2;
+            } else {
+              c += 1;
+            }
+          }
+          bridges.push(row);
+        }
+        return bridges;
+      }
+
+      function ladderTrace(bridges, startCol) {
+        var col = startCol;
+        var cols = bridges[0].length + 1;
+        for (var r = 0; r < bridges.length; r++) {
+          if (col > 0 && bridges[r][col - 1]) col -= 1;
+          else if (col < cols - 1 && bridges[r][col]) col += 1;
+        }
+        return col;
+      }
+
+      function ladderPathD(col, bridges, colX, rowY, topY, bottomY) {
+        var c = col;
+        var d = "M " + colX(c) + " " + topY;
+        for (var r = 0; r < bridges.length; r++) {
+          var y = rowY(r);
+          d += " L " + colX(c) + " " + y;
+          if (c > 0 && bridges[r][c - 1]) {
+            d += " L " + colX(c - 1) + " " + y;
+            c -= 1;
+          } else if (c < bridges[0].length && bridges[r][c]) {
+            d += " L " + colX(c + 1) + " " + y;
+            c += 1;
+          }
+        }
+        d += " L " + colX(c) + " " + bottomY;
+        return d;
+      }
+
+      function ladderReadSlots(wrap, prefix) {
+        var inputs = wrap.querySelectorAll("input");
+        var out = [];
+        for (var i = 0; i < inputs.length; i++) {
+          var v = inputs[i].value.trim();
+          out.push(v || prefix + (i + 1));
+        }
+        return out;
+      }
+
+      function ladderDraw() {
+        var cols = parseInt(ladderCountInput.value, 10);
+        if (!Number.isFinite(cols) || cols < 2) cols = 2;
+        if (cols > 10) cols = 10;
+        ladderCountInput.value = String(cols);
+
+        var numRows = parseInt(ladderRowsInput.value, 10);
+        if (!Number.isFinite(numRows) || numRows < 5) numRows = 5;
+        if (numRows > 20) numRows = 20;
+        ladderRowsInput.value = String(numRows);
+
+        var bridges = ladderGenerateBridges(cols, numRows);
+        ladderState = { cols: cols, bridges: bridges, revealed: false };
+
+        var colW = Math.max(72, Math.min(110, Math.floor(640 / Math.max(cols - 1, 1))));
+        var padX = colW / 2;
+        var rowH = 26;
+        var w = cols * colW;
+        var ladderH = numRows * rowH;
+        var h = ladderH + 16;
+
+        function colX(c) { return padX + c * colW; }
+        function rowY(r) { return 8 + r * rowH + rowH / 2; }
+        var topY = 4;
+        var bottomY = 8 + ladderH;
+
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="사다리">';
+        var ci, r, c;
+        for (ci = 0; ci < cols; ci++) {
+          svg += '<line x1="' + colX(ci) + '" y1="' + topY + '" x2="' + colX(ci) + '" y2="' + bottomY + '" stroke="#cbd5e1" stroke-width="2.5"/>';
+        }
+        for (r = 0; r < numRows; r++) {
+          var y = rowY(r);
+          for (c = 0; c < cols - 1; c++) {
+            if (bridges[r][c]) {
+              svg += '<line x1="' + colX(c) + '" y1="' + y + '" x2="' + colX(c + 1) + '" y2="' + y + '" stroke="#64748b" stroke-width="2.5"/>';
+            }
+          }
+        }
+        svg += '<g id="ladderPathLayer">';
+        for (ci = 0; ci < cols; ci++) {
+          svg += '<path class="ladder-path" id="ladderPath' + ci + '" d="' + ladderPathD(ci, bridges, colX, rowY, topY, bottomY) + '"/>';
+        }
+        svg += "</g></svg>";
+
+        var topHtml = "";
+        var botHtml = "";
+        for (ci = 0; ci < cols; ci++) {
+          topHtml +=
+            '<div class="field"><input type="text" maxlength="12" placeholder="이름" data-col="' + ci + '" autocomplete="off"></div>';
+          botHtml +=
+            '<div class="field"><input type="text" maxlength="12" placeholder="결과" data-col="' + ci + '" autocomplete="off"></div>';
+        }
+        ladderTopSlots.innerHTML = topHtml;
+        ladderBotSlots.innerHTML = botHtml;
+        ladderSvgWrap.innerHTML =
+          svg + '<div class="ladder-cover" id="ladderCover">사다리 선은 가려져 있습니다</div>';
+        ladderStage.style.width = w + "px";
+
+        ladderBoard.classList.remove("revealed");
+        ladderBoard.hidden = false;
+        ladderPlayWrap.hidden = false;
+        ladderResult.hidden = true;
+        ladderResult.innerHTML = "";
+      }
+
+      function ladderPlay() {
+        if (!ladderState) {
+          alert("먼저 사다리를 그려 주세요.");
+          return;
+        }
+        var names = ladderReadSlots(ladderTopSlots, "참가자");
+        var results = ladderReadSlots(ladderBotSlots, "결과");
+        var cols = ladderState.cols;
+        var bridges = ladderState.bridges;
+
+        ladderBoard.classList.add("revealed");
+        ladderTopSlots.querySelectorAll("input").forEach(function (el) { el.classList.remove("active"); });
+        ladderBoard.querySelectorAll(".ladder-path").forEach(function (p) { p.classList.remove("show"); });
+
+        var mapHtml = '<div class="ladder-result-title">사다리 결과</div><div class="ladder-map">';
+        var ci;
+        for (ci = 0; ci < cols; ci++) {
+          var endCol = ladderTrace(bridges, ci);
+          mapHtml +=
+            '<div class="ladder-map-row" data-col="' + ci + '"><strong>' + ladderEsc(names[ci]) + '</strong>' +
+            '<span class="ladder-map-arrow">→</span><span>' + ladderEsc(results[endCol]) + "</span></div>";
+        }
+        mapHtml += "</div>";
+        ladderResult.innerHTML = mapHtml;
+        ladderResult.hidden = false;
+        ladderResult.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+        function highlight(idx) {
+          ladderTopSlots.querySelectorAll("input").forEach(function (n) { n.classList.remove("active"); });
+          ladderBoard.querySelectorAll(".ladder-path").forEach(function (p) { p.classList.remove("show"); });
+          var inp = ladderTopSlots.querySelector('input[data-col="' + idx + '"]');
+          if (inp) inp.classList.add("active");
+          var path = document.getElementById("ladderPath" + idx);
+          if (path) path.classList.add("show");
+        }
+
+        ladderTopSlots.querySelectorAll("input").forEach(function (el) {
+          el.addEventListener("focus", function () {
+            highlight(parseInt(el.getAttribute("data-col"), 10));
+          });
+        });
+        ladderResult.querySelectorAll(".ladder-map-row").forEach(function (row) {
+          row.style.cursor = "pointer";
+          row.addEventListener("click", function () {
+            highlight(parseInt(row.getAttribute("data-col"), 10));
+          });
+        });
+      }
+
+      ladderGenBtn.addEventListener("click", ladderDraw);
+      ladderPlayBtn.addEventListener("click", ladderPlay);
+
+      document.getElementById("calcRun").addEventListener("click", function () {
+        if (!currentCalc) return;
+        currentCalc.run();
+        calcResult.hidden = false;
+      });
+      document.getElementById("convertRun").addEventListener("click", function () {
+        if (!currentConvert) return;
+        currentConvert.run();
+      });
+      document.getElementById("workRun").addEventListener("click", function () {
+        if (!currentWork) return;
+        var ret = currentWork.run();
+        if (ret && typeof ret.then === "function") {
+          ret.catch(function (e) {
+            workResult.hidden = false;
+            workResult.innerHTML = "<strong>처리 실패</strong>" + (e && e.message ? e.message : "");
+          });
+        }
+      });
+
+      // 로또 생성기
+      lottoListBack.addEventListener("click", goHome);
+      lottoDetailBack.addEventListener("click", function () {
+        openPanel("lotto", true);
+      });
+
+      document.querySelectorAll("#lottoList .tool[data-lotto-mode]").forEach(function (card) {
+        card.classList.add("clickable");
+        card.addEventListener("click", function () {
+          openLottoMode(card.getAttribute("data-lotto-mode"));
+        });
+      });
+
+      lottoGenBtn.addEventListener("click", function () {
+        function randIntInclusive(min, max) {
+          return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        function pickUnique(count, min, max) {
+          var arr = [];
+          while (arr.length < count) {
+            var n = randIntInclusive(min, max);
+            if (arr.indexOf(n) === -1) arr.push(n);
+          }
+          arr.sort(function (a, b) { return a - b; });
+          return arr;
+        }
+        function fmt2(n) {
+          return String(n).padStart(2, "0");
+        }
+
+        function oddCount(nums) {
+          return nums.reduce(function (acc, n) { return acc + (n % 2 === 1 ? 1 : 0); }, 0);
+        }
+        function lowCount(nums) {
+          // 1~22 : low, 23~45 : high
+          return nums.reduce(function (acc, n) { return acc + (n <= 22 ? 1 : 0); }, 0);
+        }
+        function decadeDistinct(nums) {
+          var s = {};
+          nums.forEach(function (n) {
+            var d = Math.floor((n - 1) / 10); // 0~4
+            s[d] = true;
+          });
+          return Object.keys(s).length;
+        }
+        function consecutivePairs(nums) {
+          var cnt = 0;
+          for (var i = 0; i < nums.length - 1; i++) {
+            if (nums[i + 1] === nums[i] + 1) cnt++;
+          }
+          return cnt;
+        }
+        function sumTotal(nums) {
+          return nums.reduce(function (acc, n) { return acc + n; }, 0);
+        }
+        function hasRun3(nums) {
+          // e.g., 5-6-7 (3개 연속) 여부
+          var run = 1;
+          for (var i = 1; i < nums.length; i++) {
+            if (nums[i] === nums[i - 1] + 1) {
+              run++;
+              if (run >= 3) return true;
+            } else {
+              run = 1;
+            }
+          }
+          return false;
+        }
+
+        function generateByMode(mode) {
+          var attempts = 0;
+          var maxAttempts = 5000;
+          while (attempts < maxAttempts) {
+            attempts++;
+            var main = pickUnique(6, 1, 45);
+
+            if (mode === 1) return main; // 랜덤
+
+            if (mode === 2) {
+              // 홀짝 3:3 + 저/고 3:3 + 연속 1개 이하 + 구간 다양성
+              var o = oddCount(main);
+              var l = lowCount(main);
+              var cPairs = consecutivePairs(main);
+              var dd = decadeDistinct(main);
+              if (o === 3 && l === 3 && cPairs <= 1 && dd >= 3) return main;
+            }
+
+            if (mode === 3) {
+              // 연속 1개 이하 + 3개 연속 금지 + 구간 다양 + 홀짝 완전고정은 피함
+              var o3 = oddCount(main);
+              var cPairs3 = consecutivePairs(main);
+              var dd3 = decadeDistinct(main);
+              if (cPairs3 <= 1 && !hasRun3(main) && dd3 >= 4 && o3 >= 2 && o3 <= 4) {
+                return main;
+              }
+            }
+
+            if (mode === 4) {
+              // 공격형: high(23~45) 비중↑ + 연속/3연속 완화 + 구간 다양
+              var l4 = lowCount(main);
+              var dd4 = decadeDistinct(main);
+              var cPairs4 = consecutivePairs(main);
+              if (l4 <= 2 && dd4 >= 3 && cPairs4 <= 2 && !hasRun3(main)) return main;
+            }
+
+            if (mode === 5) {
+              // 보수형: low(1~22) 비중↑ + 구간 다양 + 과도한 연속 완화
+              var l5 = lowCount(main);
+              var dd5 = decadeDistinct(main);
+              var cPairs5 = consecutivePairs(main);
+              if (l5 >= 4 && dd5 >= 3 && cPairs5 <= 2 && !hasRun3(main)) return main;
+            }
+
+            if (mode === 6) {
+              // 분산형: 구간(10단위) 최대한 다양 + 연속쏠림 완화
+              var dd6 = decadeDistinct(main);
+              var cPairs6 = consecutivePairs(main);
+              if (dd6 >= 4 && cPairs6 <= 2 && !hasRun3(main)) return main;
+            }
+
+            if (mode === 7) {
+              var oddSel = document.getElementById("lotto_odd");
+              var lowSel = document.getElementById("lotto_low");
+              var consecSel = document.getElementById("lotto_consec");
+              var sumSel = document.getElementById("lotto_sum");
+              var decadeSel = document.getElementById("lotto_decade");
+
+              var oddWant = oddSel ? oddSel.value : "auto";
+              var lowWant = lowSel ? lowSel.value : "auto";
+              var consecWant = consecSel ? consecSel.value : "auto";
+              var sumWant = sumSel ? sumSel.value : "auto";
+              var decadeWant = decadeSel ? decadeSel.value : "auto";
+
+              var o7 = oddCount(main);
+              var l7 = lowCount(main);
+              var cPairs7 = consecutivePairs(main);
+              var dd7 = decadeDistinct(main);
+              var sum7 = sumTotal(main);
+
+              if (oddWant !== "auto" && o7 !== parseInt(oddWant, 10)) continue;
+              if (lowWant !== "auto" && l7 !== parseInt(lowWant, 10)) continue;
+
+              if (consecWant === "none" && cPairs7 !== 0) continue;
+              if (consecWant === "max1" && cPairs7 > 1) continue;
+              if (consecWant === "no3" && hasRun3(main)) continue;
+
+              if (sumWant !== "auto") {
+                var parts = sumWant.split("-");
+                var sumMin = parseInt(parts[0], 10);
+                var sumMax = parseInt(parts[1], 10);
+                if (sum7 < sumMin || sum7 > sumMax) continue;
+              }
+
+              if (decadeWant !== "auto" && dd7 < parseInt(decadeWant, 10)) continue;
+              return main;
+            }
+          }
+          // 너무 빡빡한 조건으로 후보가 잘 안 나오면 랜덤으로 폴백
+          return pickUnique(6, 1, 45);
+        }
+
+        var sets = parseInt(lottoSets.value, 10);
+        if (!Number.isFinite(sets) || sets < 1) sets = 1;
+        if (sets > 20) sets = 20;
+
+        var mode = currentLottoMode || 1;
+
+        var html = "";
+        for (var i = 0; i < sets; i++) {
+          var main = generateByMode(mode);
+          html +=
+            '<div style="margin:10px 0">' +
+            '<strong>세트 ' + (i + 1) + ':</strong> ' +
+            main.map(fmt2).join(", ") +
+            "</div>";
+        }
+
+        lottoOut.hidden = false;
+        lottoOut.innerHTML =
+          '<div class="result-title" style="font-weight:700;margin-bottom:8px">생성 결과</div>' +
+          html;
+      });
+
+      document.querySelectorAll("#panel-home .tool[data-goto]").forEach(function (card) {
+        card.classList.add("clickable");
+        card.addEventListener("click", function () {
+          openPanel(card.getAttribute("data-goto"));
+        });
+      });
+
+      renderCalcGrid();
+      updateCrumb([{ label: "홈" }]);
+      history.replaceState({ page: "home" }, "");
+    })();
+  </script>
+</body>
+</html>
