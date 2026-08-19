@@ -4,21 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CalcShop 셈공방 — 무료 계산·변환 도구</title>
-  <!-- GA4: https://analytics.google.com 에서 속성 만들기 → 측정 ID(G-XXXXXXXXXX) 복사 후 아래에 붙여넣기 -->
+  <!-- Google Analytics (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0QL9PLG2D3"></script>
   <script>
-    window.CALCSHOP_GA_ID = "G-XXXXXXXXXX";
-    (function () {
-      var id = window.CALCSHOP_GA_ID;
-      if (!id || id === "G-XXXXXXXXXX") return;
-      var s = document.createElement("script");
-      s.async = true;
-      s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(id);
-      document.head.appendChild(s);
-      window.dataLayer = window.dataLayer || [];
-      window.gtag = function () { window.dataLayer.push(arguments); };
-      window.gtag("js", new Date());
-      window.gtag("config", id, { send_page_view: false });
-    })();
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag("js", new Date());
+    gtag("config", "G-0QL9PLG2D3", { send_page_view: false });
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3207,8 +3199,7 @@
       }
 
       function trackPageView(state) {
-        var id = window.CALCSHOP_GA_ID;
-        if (!id || id === "G-XXXXXXXXXX" || typeof window.gtag !== "function") return;
+        if (typeof window.gtag !== "function") return;
         var path = "/";
         var title = "CalcShop 셈공방";
         if (state && state.page && state.page !== "home") {
